@@ -1,5 +1,5 @@
 .PHONY: all
-all: extract pack
+all: extract
 
 ifndef version
 override version = $(shell curl -s -L http://beta.quicklisp.org/dist/quicklisp.txt | grep '^version: ' | sed -e 's/version: //')
@@ -21,11 +21,6 @@ docker_image:
 extract: output/quicklisp/$(version)
 output/quicklisp/$(version): docker_image
 	docker run --rm -i -v ${PWD}:/app ${image_name}
-
-.PHONY: pack
-pack: quicklisp-$(version).tar.gz
-quicklisp-$(version).tar.gz:
-	(cd output/ && tar -czvf "quicklisp-${version}.tar.gz" "quicklisp/${version}" && mv "quicklisp-${version}.tar.gz" ..)
 
 .PHONY: clean
 clean:
