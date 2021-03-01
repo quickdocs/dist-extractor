@@ -44,8 +44,9 @@ for release in "${releases[@]}"; do
   delete_if_empty "$release_dir/errors.log"
 
   ## Parsing systems
+  mkdir -p "$release_dir/systems"
   for system in `scripts/release.lisp "$release" systems`; do
-    system_dir="$release_dir/$system"
+    system_dir="$release_dir/systems/$system"
     mkdir -p "$system_dir"
     timeout -k 10 -s TERM 60 \
       scripts/system.lisp "$system" \
