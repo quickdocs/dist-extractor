@@ -12,6 +12,10 @@ quit() { echo "SIGINT"; exit; }
 delete_if_empty() {
   [ -s "$1" ] || rm "$1"
 }
+validate_json() {
+  file=$1
+  (cat $file | jq >/dev/null) || (echo "[ERROR] Failed to parse a JSON file '$file'." >&2 && exit 1)
+}
 
 dist=quicklisp
 version=$(scripts/dist.lisp "$dist" version)
@@ -30,12 +34,13 @@ releases=( $(scripts/dist.lisp "$dist" releases) )
 current=0
 for release in "${releases[@]}"; do
   current=$((++current))
-  echo "[$current/${#releases[@]}] Release ${release}"
+  echo "[$current/${#releases[@]}] Release '${release}'"
   release_dir="$dist_dir/$release"
   mkdir -p "$release_dir"
   scripts/release.lisp "$release" \
       2> "$release_dir/errors.log" \
     | scripts/sexp-to-json.lisp > "$release_dir/info.json"
+  validate_json "$release_dir/info.json" 2> "$release_dir/errors.log"
   delete_if_empty "$release_dir/errors.log"
 
   ## Parsing systems
@@ -46,6 +51,7 @@ for release in "${releases[@]}"; do
       scripts/system.lisp "$system" \
           2> "$system_dir/errors.log" \
         | scripts/sexp-to-json.lisp > "$system_dir/info.json"
+    validate_json "$system_dir/info.json" 2> "$system_dir/errors.log"
     delete_if_empty "$system_dir/errors.log"
   done
 done
