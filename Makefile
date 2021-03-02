@@ -1,5 +1,5 @@
 .PHONY: all
-all: extract
+all: build_image extract
 
 ifndef version
 override version = $(shell curl -s -L http://beta.quicklisp.org/dist/quicklisp.txt | grep '^version: ' | sed -e 's/version: //')
@@ -16,7 +16,7 @@ docker_image:
 
 .PHONY: extract
 extract: output/quicklisp/$(version)
-output/quicklisp/$(version): docker_image
+output/quicklisp/$(version):
 	docker run --rm -i -v ${PWD}:/app "${image_name}:${version}" /app/extract.sh
 
 .PHONY: upload
