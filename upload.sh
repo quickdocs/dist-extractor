@@ -12,7 +12,7 @@ get_local_md5hash() {
 }
 get_gcs_md5hash() {
   filename=$1
-  gsutil -q stat "gs://quickdocs-dist/$filename" | grep 'Hash (md5):' | sed -r 's/^\s*Hash \(md5\):\s*//'
+  gsutil stat "gs://quickdocs-dist/$filename" 2>/dev/null | grep 'Hash (md5):' | sed -r 's/^\s*Hash \(md5\):\s*//'
 }
 
 cd "$directory"
