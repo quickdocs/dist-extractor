@@ -9,18 +9,15 @@ endif
 version:
 	@echo "${version}"
 
-image_name = "ghcr.io/quickdocs/quicklisp-dist-all:${version}"
+image_name = "ghcr.io/quickdocs/quicklisp-dist-all"
 .PHONY: docker_image
 docker_image:
-	docker image inspect ${image_name} >/dev/null 2>&1 || \
-		docker pull ${image_name} >/dev/null 2>&1 || \
-		(docker build -t ${image_name} --build-arg DIST_VERSION=${version} . \
-		   && ([ "${PUSH_IMAGE}" ] && docker push ${image_name}) || true)
+	./build_image.sh ${image_name} ${version}
 
 .PHONY: extract
 extract: output/quicklisp/$(version)
 output/quicklisp/$(version): docker_image
-	docker run --rm -i -v ${PWD}:/app ${image_name}
+	docker run --rm -i -v ${PWD}:/app "${image_name}:${version}" /app/extract.sh
 
 .PHONY: upload
 upload:

@@ -1,6 +1,13 @@
 ARG SBCL_VERSION=2.1.1
 FROM clfoundation/sbcl:${SBCL_VERSION}
 ARG DIST_VERSION
+ARG BUILD_DATE
+ARG VCS_REF
+LABEL org.label-schema.build-date=$BUILD_DATE \
+      org.label-schema.vcs-ref=$VCS_REF \
+      org.label-schema.vcs-url="https://github.com/quickdocs/dist-extractor" \
+      org.label-schema.version=$DIST_VERSION \
+      org.label-schema.schema-version="1.0"
 
 RUN set -x; \
   apt-get update && apt-get -y install --no-install-recommends jq && \
@@ -20,4 +27,4 @@ RUN set -x; \
   sbcl --eval '(mapc (function ql-dist:ensure-installed) (ql-dist:provided-releases t))' --quit && \
   rm /root/quicklisp.lisp
 
-ENTRYPOINT ["/app/extract.sh"]
+ENTRYPOINT ["/bin/bash"]

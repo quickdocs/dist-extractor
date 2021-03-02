@@ -21,6 +21,12 @@ jobs:
       - name: Build Docker image
         run: |
           make docker_image PUSH_IMAGE=1
+      - name: Push Docker image
+        if: github.ref == 'refs/heads/master'
+        run: |
+          image_name=ghcr.io/quickdocs/quicklisp-dist-all
+          version=$(docker images ghcr.io/quickdocs/quicklisp-dist-all | tail -n +2 | head -n 1 | awk '{ print $2 }')
+          docker push "$image_name:$version"
   extract:
     name: Extract data
     runs-on: ubuntu-latest
