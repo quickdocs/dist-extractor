@@ -2,6 +2,10 @@ ARG SBCL_VERSION=2.1.1
 FROM clfoundation/sbcl:${SBCL_VERSION}
 ARG DIST_VERSION
 
+RUN set -x; \
+  apt-get update && apt-get -y install --no-install-recommends jq && \
+  rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 ADD https://beta.quicklisp.org/quicklisp.lisp /root/quicklisp.lisp

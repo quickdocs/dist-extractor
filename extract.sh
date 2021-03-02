@@ -55,7 +55,14 @@ for release in "${releases[@]}"; do
     validate_json "$system_dir/info.json" 2> "$system_dir/errors.log"
     delete_if_empty "$system_dir/errors.log"
   done
+
+  ## Concatenate JSON files
+  json_path="$(cat "$release_dir/info.json" | jq -r '.archive_url' | sed -s -r 's!http://beta.quicklisp.org/archive/[^/]+/!!' | sed -s 's/\.tgz$//').json"
+  mkdir -p "$destination/$dist/$(echo $json_path | sed -r 's!/[^/]*\.json$!!')"
+  find "$release_dir/systems" -name info.json | \
+    xargs jq -s 'map({(.name): .}) | add | {systems:.}' | \
+    jq -M --slurpfile release "$release_dir/info.json" '$release[0] * .' \
+      > "$destination/$dist/$json_path"
 done
 
-mv "$output" "$destination"
 chmod 777 -R "$destination"
