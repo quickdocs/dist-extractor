@@ -22,6 +22,10 @@ extract: output/quicklisp/$(version)
 output/quicklisp/$(version): docker_image
 	docker run --rm -i -v ${PWD}:/app ${image_name}
 
+.PHONY: upload
+upload:
+	./upload.sh
+
 .PHONY: clean
 clean:
 	rm -rf output
