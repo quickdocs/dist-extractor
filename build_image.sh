@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 image_name=$1
 dist_version=$2
 
