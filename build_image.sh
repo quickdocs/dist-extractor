@@ -7,6 +7,8 @@ docker image inspect "${image_name}:${dist_version}" >/dev/null 2>&1 || docker p
 
 remote_vcs_ref=$(docker image inspect "${image_name}:${dist_version}" 2>/dev/null | jq -M -r '.[0].Config.Labels["org.label-schema.vcs-ref"]')
 
+git fetch
+
 if [ "$remote_vcs_ref" = "null" ] || \
    [ "$(git rev-parse --short $remote_vcs_ref 2>/dev/null)" = "" ] || \
    [ "$(git diff --exit-code $remote_vcs_ref...HEAD Dockerfile)" != "" ]; then
@@ -16,4 +18,6 @@ if [ "$remote_vcs_ref" = "null" ] || \
     --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
     --build-arg VCS_REF=`git rev-parse --short HEAD` \
     .
+else
+  echo "Dockerfile is not changed since the last build. Skipped."
 fi
