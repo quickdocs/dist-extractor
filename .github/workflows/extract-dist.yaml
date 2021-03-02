@@ -20,13 +20,16 @@ jobs:
           password: ${{ secrets.CR_PAT }}
       - name: Build Docker image
         run: |
-          make docker_image PUSH_IMAGE=1
-      - name: Push Docker image
-        if: github.ref == 'refs/heads/master'
+          make docker_image
+      - name: Save the Docker image
         run: |
           image_name=ghcr.io/quickdocs/quicklisp-dist-all
-          version=$(docker images ghcr.io/quickdocs/quicklisp-dist-all | tail -n +2 | head -n 1 | awk '{ print $2 }')
-          docker push "$image_name:$version"
+          docker save $image_name > /tmp/docker-image.tar
+      - name: Upload the image as an artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: docker-image
+          path: /tmp/docker-image.tar
   extract:
     name: Extract data
     runs-on: ubuntu-latest
@@ -45,14 +48,54 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
+      - name: Download an artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: docker-image
+          path: /tmp
+      - name: Load the Docker image
+        run: |
+          docker load --input /tmp/docker-image.tar
+          docker image ls -a
       - name: Extract the dist data
         run: |
           make extract
-      - uses: actions/upload-artifact@v2
-        with:
-          name: quicklisp-dist
-          path: output
       - name: Upload to GCS
         if: github.ref == 'refs/heads/master'
         run: |
           make upload
+  push_docker_image:
+    name: Push Docker image
+    needs: build_docker_image
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.CR_PAT }}
+      - name: Download an artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: docker-image
+          path: /tmp
+      - name: Load the Docker image
+        run: |
+          docker load --input /tmp/docker-image.tar
+          docker image ls -a
+      - name: Push Docker image
+        run: |
+          image_name=ghcr.io/quickdocs/quicklisp-dist-all
+          version=$(docker images ghcr.io/quickdocs/quicklisp-dist-all | tail -n +2 | head -n 1 | awk '{ print $2 }')
+          docker push "$image_name:$version"
+  clean:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [extract, push_docker_image]
+    steps:
+      - name: Delete the artifact
+        uses: geekyeggo/delete-artifact@v1
+        with:
+          name: docker-image
+          failOnError: false
