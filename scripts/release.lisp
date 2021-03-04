@@ -1,7 +1,21 @@
 #!/usr/local/bin/sbcl --script
 
-(require 'asdf)
 (load (merge-pathnames #P"quicklisp/setup.lisp" (user-homedir-pathname)))
+
+(defun release-last-updated-version (release)
+  (let* ((dist (ql-dist:dist release))
+         (prefix-len (length (format nil "~Aarchive/~A/" (ql-dist::archive-base-url dist) (ql-dist:name release)))))
+    (subseq (ql-dist:archive-url release)
+            prefix-len
+            (+ 10 prefix-len))))
+
+(defun bucket-release-url (release path)
+  (format nil "~A/~A/~A/releases/~A~A"
+          (or (uiop:getenv "BUCKET_BASE_URL") "")
+          (ql-dist:name (ql-dist:dist release))
+          (release-last-updated-version release)
+          (ql-dist:prefix release)
+          path))
 
 (defun release-info (release)
   `(("project_name" . ,(ql-dist:project-name release))
@@ -13,7 +27,8 @@
                             `(("name" . ,(ql-dist:name system))
                               ("system_file_name" . ,(ql-dist:system-file-name system))
                               ("required_systems" . ,(ql-dist:required-systems system))))
-                          (ql-dist:provided-systems release)))))
+                          (ql-dist:provided-systems release)))
+    ("systems_metadata_url" . ,(bucket-release-url release "/systems.json"))))
 
 (defun main ()
   (destructuring-bind ($0 &optional name command &rest args)

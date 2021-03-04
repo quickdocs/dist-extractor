@@ -9,9 +9,6 @@ set -f
 trap quit SIGINT
 quit() { echo "SIGINT"; exit; }
 
-delete_if_empty() {
-  [ -s "$1" ] || rm "$1"
-}
 validate_json() {
   file=$1
   (cat "$file" | jq . -M >/dev/null) || (echo "[ERROR] Failed to parse a JSON file '$file'." >&2 && exit 1)
@@ -43,7 +40,6 @@ for release in "${releases[@]}"; do
       2> >(tee "$release_dir/error.log" >&2) \
     | scripts/sexp-to-json.lisp > "$release_dir/info.json" 2> >(tee -a "$release_dir/error.log" >&2)
       validate_json "$release_dir/info.json" 2> >(tee -a "$release_dir/error.log" >&2)
-  delete_if_empty "$release_dir/error.log"
 
   ## Parsing systems
   mkdir -p "$release_dir/systems"
@@ -55,27 +51,30 @@ for release in "${releases[@]}"; do
           2> >(tee "$system_dir/error.log" >&2) \
         | scripts/sexp-to-json.lisp > "$system_dir/info.json" 2> >(tee -a "$system_dir/error.log" >&2)
         validate_json "$system_dir/info.json" 2> >(tee -a "$system_dir/error.log" >&2)
-    delete_if_empty "$system_dir/error.log"
   done
 
-  base_path="$(cat "$release_dir/info.json" | jq -r '.archive_url' | sed -s -r 's!http://beta.quicklisp.org/archive/[^/]+/!!' | sed -s 's/\.tgz$//')"
-  mkdir -p "$destination/$dist/$base_path"
+  version_and_prefix="$(cat "$release_dir/info.json" | jq -r '.archive_url' | sed -s -r 's!http://beta.quicklisp.org/archive/[^/]+/!!' | sed -s 's/\.tgz$//')"
+  release_version=$(echo $version_and_prefix | sed -s -r 's![^/]+$!!')
+  prefix=$(echo $version_and_prefix | sed -s -r 's!^[^/]+!!')
+  mkdir -p "$destination/$dist/$release_version/releases/$prefix"
 
   ## Concatenate error logs
-  destination_error_log="$destination/$dist/$base_path/error.log"
-  error_logs=( $(find "$release_dir" -name "error.log") )
+  destination_error_log="$destination/$dist/$release_version/releases/$prefix/error.log"
+  error_logs=( $(find "$release_dir" -name "error.log" -size +0c) )
   if [ ${#error_logs} != 0 ]; then
     tail -n +1 -v ${error_logs[@]} > $destination_error_log
   fi
 
-  ## Concatenate JSON files
+  ## Output release info.json
+  cp "$release_dir/info.json" "$destination/$dist/$release_version/releases/$prefix/info.json"
+
+  ## Concatenate system JSON files
   find "$release_dir/systems" -name info.json | \
-    xargs jq -s 'map({(.name): .}) | add | {systems:.}' | \
-    jq -M --slurpfile release "$release_dir/info.json" '$release[0] * .' \
-      > "$destination/$dist/$base_path/info.json"
+    xargs jq -s 'map({(.name): .}) | add' \
+      > "$destination/$dist/$release_version/releases/$prefix/systems.json"
 done
 
 ## Concatenate error logs
-find "$dist_dir" -name "error.log" | xargs tail -n +1 -v > "$destination/$dist/$version/errors.log"
+find "$dist_dir" -name "error.log" -size +0c | xargs tail -n +1 -v > "$destination/$dist/$version/errors.log"
 
 chmod 777 -R "$destination"

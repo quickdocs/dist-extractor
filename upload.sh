@@ -40,7 +40,7 @@ for version in `ls $dist`; do
   for file in `find $dist/$version -maxdepth 1 -not -type d`; do
     upload_if_changed $file
   done
-  for release in `ls -d $dist/$version/*/`; do
+  for release in `ls -d $dist/$version/releases/*/`; do
     for file in `ls $release`; do
       upload_if_changed "${release}${file}"
     done
