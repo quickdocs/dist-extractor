@@ -66,7 +66,7 @@ for release in "${releases[@]}"; do
   fi
 
   ## Output release info.json
-  cp "$release_dir/info.json" "$destination/$dist/$release_version/releases/$prefix/info.json"
+  cat "$release_dir/info.json" | jq . -M > "$destination/$dist/$release_version/releases/$prefix/info.json"
 
   ## Concatenate system JSON files
   find "$release_dir/systems" -name info.json | \
