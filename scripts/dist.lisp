@@ -3,12 +3,44 @@
 (require 'asdf)
 (load (merge-pathnames #P"quicklisp/setup.lisp" (user-homedir-pathname)))
 
+(defun bucket-dist-url (dist path)
+  (format nil "~A/~A/~A/~A"
+          (or (uiop:getenv "BUCKET_BASE_URL") "")
+          (ql-dist:name dist)
+          (ql-dist:version dist)
+          path))
+
+(defun release-last-updated-version (release)
+  (let* ((dist (ql-dist:dist release))
+         (prefix-len (length (format nil "~Aarchive/~A/" (ql-dist::archive-base-url dist) (ql-dist:name release)))))
+    (subseq (ql-dist:archive-url release)
+            prefix-len
+            (+ 10 prefix-len))))
+
+(defun bucket-release-url (release path)
+  (format nil "~A/~A/~A/~A"
+          (or (uiop:getenv "BUCKET_BASE_URL") "")
+          (release-last-updated-version release)
+          (ql-dist:name release)
+          path))
+
 (defun dist-info (dist)
   `(("name" . ,(ql-dist:name dist))
     ("version" . ,(ql-dist:version dist))
     ("system_index_url" . ,(ql-dist:system-index-url dist))
     ("release_index_url" . ,(ql-dist:release-index-url dist))
-    ("distinfo_subscription_url" . ,(ql-dist::distinfo-subscription-url dist))))
+    ("archive_base_url" . ,(ql-dist::archive-base-url dist))
+    ("distinfo_subscription_url" . ,(ql-dist::distinfo-subscription-url dist))
+    ("canonical_distinfo_url" . ,(ql-dist:canonical-distinfo-url dist))
+    ("provided_releases_count" . ,(length (ql-dist:provided-releases dist)))
+    ("provided_releases_url" . ,(bucket-dist-url dist "releases.json"))))
+
+(defun now ()
+  (multiple-value-bind (sec min hour date month year day daylight-p zone)
+      (decode-universal-time (get-universal-time) 0)
+    (declare (ignore day daylight-p zone))
+    (format nil "~4D-~2,'0D-~2,'0DT~2,'0D:~2,'0D:~2,'0DZ"
+            year month date hour min sec)))
 
 (defun main ()
   (destructuring-bind ($0 &optional (name "quicklisp") command &rest args)
@@ -19,10 +51,18 @@
         (error "No dist named '~A' found" name))
       (cond
         ((null command)
-         (format t "~&~S~%" (dist-info dist)))
+         (format t "~&~S~%"
+                 `(("dist" . ,(dist-info dist))
+                   ("extracted_at" . ,(now))
+                   ("extract_errors_url" . ,(bucket-dist-url dist "errors.log")))))
         ((equal command "releases")
-         (dolist (release (ql-dist:provided-releases dist))
-           (write-line (ql-dist:name release))))
+         (format t "~&~S~%"
+                 (mapcar (lambda (release)
+                           (cons (ql-dist:name release)
+                                 (bucket-release-url release
+                                                     (format nil "releases/~A/info.json"
+                                                             (ql-dist:prefix release)))))
+                         (ql-dist:provided-releases dist))))
         ((equal command "version")
          (write-line (cdr (assoc "version" (dist-info dist) :test 'equal))))
         (t

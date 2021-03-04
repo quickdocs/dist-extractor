@@ -9,7 +9,8 @@ remote_vcs_ref=$(docker image inspect "${image_name}:${dist_version}" 2>/dev/nul
 
 git fetch
 
-if [ "$remote_vcs_ref" = "null" ] || \
+if [ "$FORCE" ] || \
+   [ "$remote_vcs_ref" = "null" ] || \
    [ "$(git rev-parse --short $remote_vcs_ref 2>/dev/null)" = "" ] || \
    [ "$(git diff --exit-code $remote_vcs_ref...HEAD Dockerfile)" != "" ]; then
   echo "Dockerfile is changed between $remote_vcs_ref...HEAD"

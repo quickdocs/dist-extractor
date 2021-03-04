@@ -9,7 +9,7 @@ endif
 version:
 	@echo "${version}"
 
-image_name = "ghcr.io/quickdocs/quicklisp-dist-all"
+image_name = ghcr.io/quickdocs/quicklisp-dist-all
 .PHONY: docker_image
 docker_image:
 	./build_image.sh ${image_name} ${version}
@@ -25,5 +25,4 @@ upload:
 
 .PHONY: clean
 clean:
-	rm -rf output
-	rm quicklisp-*.tar.gz
+	rm -rf output .output
