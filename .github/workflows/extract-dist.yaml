@@ -60,6 +60,8 @@ jobs:
           docker load --input /tmp/docker-image.tar
           docker image ls -a
       - name: Extract the dist data
+        env:
+          BUCKET_BASE_URL: https://storage.googleapis.com/quickdocs-dist
         run: |
           make extract
       - name: Upload to GCS
