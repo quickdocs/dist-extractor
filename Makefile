@@ -17,7 +17,7 @@ docker_image:
 .PHONY: extract
 extract: output/quicklisp/$(version)
 output/quicklisp/$(version):
-	docker run --rm -i -v ${PWD}:/app "${image_name}:${version}" /app/extract.sh
+	docker run --rm -i -e BUCKET_BASE_URL=${BUCKET_BASE_URL} -v ${PWD}:/app "${image_name}:${version}" /app/extract.sh
 
 .PHONY: upload
 upload:
