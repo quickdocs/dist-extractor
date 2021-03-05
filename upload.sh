@@ -17,11 +17,22 @@ get_gcs_md5hash() {
 
 upload_if_changed() {
   file=$1
+  ext=${file##*.}
+  case ext in
+    json)
+      content_type=application/json
+      break
+      ;;
+    *)
+      content_type=text/plain
+      break
+      ;;
+  esac
   md5hash=$(get_local_md5hash $file)
   gcs_md5hash=$(get_gcs_md5hash $file)
   if [ "$gcs_md5hash" != "$md5hash" ]; then
     echo "Upload '$file'"
-    gsutil cp $file gs://quickdocs-dist/$file
+    gsutil -h "Content-Type:$content_type" cp $file gs://quickdocs-dist/$file
   else
     echo "No changes in '$file'"
   fi
