@@ -21,11 +21,9 @@ upload_if_changed() {
   case ext in
     json)
       content_type=application/json
-      break
       ;;
     *)
       content_type=text/plain
-      break
       ;;
   esac
   md5hash=$(get_local_md5hash $file)
