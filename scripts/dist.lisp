@@ -35,15 +35,7 @@
     ("canonical_distinfo_url" . ,(ql-dist:canonical-distinfo-url dist))
     ("provided_releases_count" . ,(length (ql-dist:provided-releases dist)))
     ("provided_releases_url" . ,(bucket-dist-url dist "/releases.json"))
-    ("extracted_at" . ,(now))
     ("extract_errors_url" . ,(bucket-dist-url dist "/errors.log"))))
-
-(defun now ()
-  (multiple-value-bind (sec min hour date month year day daylight-p zone)
-      (decode-universal-time (get-universal-time) 0)
-    (declare (ignore day daylight-p zone))
-    (format nil "~4D-~2,'0D-~2,'0DT~2,'0D:~2,'0D:~2,'0DZ"
-            year month date hour min sec)))
 
 (defun main ()
   (destructuring-bind ($0 &optional (name "quicklisp") command &rest args)
