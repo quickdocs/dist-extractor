@@ -18,7 +18,7 @@ get_gcs_md5hash() {
 upload_if_changed() {
   file=$1
   ext=${file##*.}
-  case ext in
+  case "$ext" in
     json)
       content_type=application/json
       ;;
