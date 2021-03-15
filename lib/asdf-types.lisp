@@ -143,12 +143,12 @@
     value))
 
 (defun authors (value)
-  (with-ignore-invalid (:author #())
+  (with-ignore-invalid (:author)
     (check-type value (or person-or-persons null))
     (ensure-list value)))
 
 (defun maintainers (value)
-  (with-ignore-invalid (:maintainer #())
+  (with-ignore-invalid (:maintainer)
     (check-type value (or person-or-persons null))
     (ensure-list value)))
 
@@ -186,6 +186,4 @@
 
 (defun depends-on (value &optional system-dir)
   (check-type value list)
-  (if (null value)
-      #()
-      (mapcar (lambda (v) (dependency v system-dir)) value)))
+  (mapcar (lambda (v) (dependency v system-dir)) value))
