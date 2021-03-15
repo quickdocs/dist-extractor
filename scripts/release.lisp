@@ -26,7 +26,7 @@
     ("systems" . ,(mapcar (lambda (system)
                             `(("name" . ,(ql-dist:name system))
                               ("system_file_name" . ,(ql-dist:system-file-name system))
-                              ("required_systems" . ,(ql-dist:required-systems system))))
+                              ("required_systems" . ,(or (ql-dist:required-systems system) #()))))
                           (ql-dist:provided-systems release)))
     ("systems_metadata_url" . ,(bucket-release-url release "/systems.json"))))
 
