@@ -39,7 +39,13 @@ for release in "${releases[@]}"; do
   scripts/release.lisp "$release" \
       2> >(tee "$release_dir/error.log" >&2) \
     | scripts/sexp-to-json.lisp > "$release_dir/info.json" 2> >(tee -a "$release_dir/error.log" >&2)
-      validate_json "$release_dir/info.json" 2> >(tee -a "$release_dir/error.log" >&2)
+  validate_json "$release_dir/info.json" 2> >(tee -a "$release_dir/error.log" >&2)
+
+  ## Write readme.json
+  scripts/readme.lisp "$release" \
+      2> >(tee "$release_dir/error.log" >&2) \
+    | scripts/sexp-to-json.lisp > "$release_dir/readme.json" 2> >(tee -a "$release_dir/error.log" >&2)
+  validate_json "$release_dir/readme.json" 2> >(tee -a "$release_dir/error.log" >&2)
 
   ## Parsing systems
   mkdir -p "$release_dir/systems"
@@ -50,7 +56,7 @@ for release in "${releases[@]}"; do
       scripts/system.lisp "$system" \
           2> >(tee "$system_dir/error.log" >&2) \
         | scripts/sexp-to-json.lisp > "$system_dir/info.json" 2> >(tee -a "$system_dir/error.log" >&2)
-        validate_json "$system_dir/info.json" 2> >(tee -a "$system_dir/error.log" >&2)
+    validate_json "$system_dir/info.json" 2> >(tee -a "$system_dir/error.log" >&2)
   done
 
   version_and_prefix="$(cat "$release_dir/info.json" | jq -r '.archive_url' | sed -s -r 's!http://beta.quicklisp.org/archive/[^/]+/!!' | sed -s 's/\.tgz$//')"
@@ -67,6 +73,9 @@ for release in "${releases[@]}"; do
 
   ## Output release info.json
   cat "$release_dir/info.json" | jq . -M > "$destination/$dist/$release_version/releases/$prefix/info.json"
+
+  ## Output release readme.json
+  cat "$release_dir/readme.json" | jq . -M > "$destination/$dist/$release_version/releases/$prefix/readme.json"
 
   ## Concatenate system JSON files
   find "$release_dir/systems" -name info.json | \

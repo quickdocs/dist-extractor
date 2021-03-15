@@ -28,7 +28,8 @@
                               ("system_file_name" . ,(ql-dist:system-file-name system))
                               ("required_systems" . ,(or (ql-dist:required-systems system) #()))))
                           (ql-dist:provided-systems release)))
-    ("systems_metadata_url" . ,(bucket-release-url release "/systems.json"))))
+    ("systems_metadata_url" . ,(bucket-release-url release "/systems.json"))
+    ("readme_url" . ,(bucket-release-url release "/readme.json"))))
 
 (defun main ()
   (destructuring-bind ($0 &optional name command &rest args)
