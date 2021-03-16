@@ -1,11 +1,9 @@
 #!/bin/bash
 
 # Usage:
-#   $ ./upload.sh <directory>
+#   $ ./upload_release.sh <release>
 
-BASEDIR=$(dirname `readlink -f $0`)
-dist=quicklisp
-directory=${1:-./output}
+release=$1
 
 get_local_md5hash() {
   filename=$1
@@ -37,10 +35,22 @@ upload_if_changed() {
   fi
 }
 
-cd "$directory"
-for version in `ls $dist`; do
-  for file in `find $dist/$version -maxdepth 1 -not -type d`; do
-    upload_if_changed $file
+remove_if_exists() {
+  file=$1
+  if [ $(gsutil -q stat "gs://quickdocs-dist/$file") ]; then
+    echo "Delete '$file' if exists on remote"
+    #gsutil rm "gs://quickdocs-dist/$file"
+  fi
+}
+
+upload_release() {
+  release=$1
+  for file in `ls $release`; do
+    upload_if_changed "${release}${file}"
   done
-  ls -d $dist/$version/releases/*/ | xargs -P8 -L1 $BASEDIR/upload_release.sh
-done
+  if [ ! -f ${release}error.log ]; then
+    remove_if_exists "${release}error.log"
+  fi
+}
+
+upload_release $release
