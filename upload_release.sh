@@ -29,7 +29,7 @@ upload_if_changed() {
   gcs_md5hash=$(get_gcs_md5hash $file)
   if [ "$gcs_md5hash" != "$md5hash" ]; then
     echo "Upload '$file'"
-    #gsutil -h "Content-Type:$content_type" cp $file gs://quickdocs-dist/$file
+    gsutil -h "Content-Type:$content_type" cp $file gs://quickdocs-dist/$file
   else
     echo "No changes in '$file'"
   fi
@@ -39,7 +39,7 @@ remove_if_exists() {
   file=$1
   if [ $(gsutil -q stat "gs://quickdocs-dist/$file") ]; then
     echo "Delete '$file' if exists on remote"
-    #gsutil rm "gs://quickdocs-dist/$file"
+    gsutil rm "gs://quickdocs-dist/$file"
   fi
 }
 
