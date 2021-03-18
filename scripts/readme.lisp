@@ -6,6 +6,35 @@
   (check-type path pathname)
   (equal (pathname-name path) "README"))
 
+(defun file-encoding (file)
+  (string-right-trim
+    '(#\Newline)
+    (uiop:run-program
+      `("file" "-b" "--mime-encoding" ,(uiop:native-namestring file))
+      :output :string)))
+
+(defun supported-encoding-p (encoding)
+  (when (stringp encoding)
+    (and
+      (uiop:run-program
+        (format nil "iconv -l | grep -i '^~A//$'"
+                encoding)
+        :ignore-error-status t
+        :output :string)
+      t)))
+
+(defun read-file-in-utf-8 (file)
+  (let ((encoding (file-encoding file)))
+    (uiop:run-program `("iconv"
+                        ,@(when (supported-encoding-p encoding)
+                            `("-f" ,encoding))
+                        "-t" "utf-8"
+                        "-c"
+                        ,(uiop:native-namestring file))
+                      :ignore-error-status t
+                      :output :string
+                      :error-output *error-output*)))
+
 (defun main ()
   (destructuring-bind ($0 &optional name &rest args)
       sb-ext:*posix-argv*
@@ -22,7 +51,7 @@
                    ,(or (mapcar
                           (lambda (file)
                             `(("filename" . ,(file-namestring file))
-                              ("content" . ,(uiop:read-file-string file))))
+                              ("content" . ,(read-file-in-utf-8 file))))
                           (remove-if-not
                             #'readme-file-p
                             (uiop:directory-files release-dir)))
