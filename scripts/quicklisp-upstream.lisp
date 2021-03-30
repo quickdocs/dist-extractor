@@ -24,6 +24,7 @@
 (define-upstream-source :latest-github-tag)
 (define-upstream-source :tagged-git)
 (define-upstream-source :branched-git)
+(define-upstream-source :single-file)
 
 (defun parse-source-txt (source-file)
   (let* ((line (uiop:read-file-line source-file))
