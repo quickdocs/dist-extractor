@@ -37,15 +37,20 @@ for release in "${releases[@]}"; do
   release_dir="$dist_dir/releases/$release"
   mkdir -p "$release_dir"
   scripts/release.lisp "$release" \
-      2> >(tee "$release_dir/error.log" >&2) \
+      2> >(tee -a "$release_dir/error.log" >&2) \
     | scripts/sexp-to-json.lisp > "$release_dir/info.json" 2> >(tee -a "$release_dir/error.log" >&2)
   validate_json "$release_dir/info.json" 2> >(tee -a "$release_dir/error.log" >&2)
 
   ## Write readme.json
   scripts/readme.lisp "$release" \
-      2> >(tee "$release_dir/error.log" >&2) \
+      2> >(tee -a "$release_dir/error.log" >&2) \
     | scripts/sexp-to-json.lisp > "$release_dir/readme.json" 2> >(tee -a "$release_dir/error.log" >&2)
   validate_json "$release_dir/readme.json" 2> >(tee -a "$release_dir/error.log" >&2)
+
+  ## Get upstream URL
+  scripts/quicklisp-upstream.lisp "$release" \
+      2> >(tee -a "$release_dir/error.log" >&2) > "$release_dir/upstream_url.txt"
+  upstream_url=$(cat "$release_dir/upstream_url.txt")
 
   ## Parsing systems
   mkdir -p "$release_dir/systems"
@@ -72,7 +77,8 @@ for release in "${releases[@]}"; do
   fi
 
   ## Output release info.json
-  cat "$release_dir/info.json" | jq . -M > "$destination/$dist/$release_version/releases/$prefix/info.json"
+  cat "$release_dir/info.json" | jq ". += {\"upstream_url\": \"$upstream_url\"}" -M \
+    > "$destination/$dist/$release_version/releases/$prefix/info.json"
 
   ## Output release readme.json
   cat "$release_dir/readme.json" | jq . -M > "$destination/$dist/$release_version/releases/$prefix/readme.json"

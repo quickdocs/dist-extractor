@@ -9,4 +9,4 @@
 
 output/
 .output/
-quicklisp-*.tar.gz
+quicklisp-projects
