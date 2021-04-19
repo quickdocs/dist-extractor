@@ -27,6 +27,9 @@ extract: output/quicklisp/$(version)
 output/quicklisp/$(version): quicklisp-projects-version
 	docker run --rm -i -e BUCKET_BASE_URL=${BUCKET_BASE_URL} -v ${PWD}:/app "${image_name}:${version}" /app/extract.sh
 
+generate-index:
+	./generate-index.sh quicklisp ${version}
+
 .PHONY: upload
 upload:
 	./upload.sh

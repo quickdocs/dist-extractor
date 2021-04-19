@@ -38,9 +38,14 @@ upload_if_changed() {
 }
 
 cd "$directory"
-for version in `ls $dist`; do
-  for file in `find $dist/$version -maxdepth 1 -not -type d`; do
-    upload_if_changed $file
-  done
-  ls -d $dist/$version/releases/*/ | xargs -P8 -L1 $BASEDIR/upload_release.sh
+for entry in `ls $dist`; do
+  if [ -f entry ]; then
+    upload_if_changed $entry
+  elif [ -d entry ]; then
+    version=$entry
+    for file in `find $dist/$version -maxdepth 1 -not -type d`; do
+      upload_if_changed $file
+    done
+    ls -d $dist/$version/releases/*/ | xargs -P8 -L1 $BASEDIR/upload_release.sh
+  fi
 done
