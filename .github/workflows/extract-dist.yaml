@@ -38,7 +38,7 @@ jobs:
         env:
           BUCKET_BASE_URL: https://storage.googleapis.com/quickdocs-dist
         run: |
-          make extract generate-index
+          make generate-index extract
       - name: Upload to GCS
         if: github.ref == 'refs/heads/master'
         run: |
