@@ -39,9 +39,9 @@ upload_if_changed() {
 
 cd "$directory"
 for entry in `ls $dist`; do
-  if [ -f $entry ]; then
-    upload_if_changed $entry
-  elif [ -d $entry ]; then
+  if [ -f "$dist/$entry" ]; then
+    upload_if_changed "$dist/$entry"
+  elif [ -d "$dist/$entry" ]; then
     version=$entry
     for file in `find $dist/$version -maxdepth 1 -not -type d`; do
       upload_if_changed $file
