@@ -9,7 +9,7 @@
 
 (defun uniq (list)
   (remove-duplicates list
-                     :key (lambda (v) (gethash "name" v))
+                     :key (lambda (v) (cdr (assoc "name" v :test 'equal)))
                      :test 'equal
                      :from-end t))
 
