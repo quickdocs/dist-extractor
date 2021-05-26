@@ -7,6 +7,12 @@
 (do-external-symbols (symb :dist-extractor/lib/asdf-types)
   (import symb))
 
+(defun uniq (list)
+  (remove-duplicates list
+                     :key (lambda (v) (gethash "name" v))
+                     :test 'equal
+                     :from-end t))
+
 (defun asdf-system-metadata (system-name)
   (let* ((system (let ((*standard-output* (make-broadcast-stream)))
                    (handler-bind ((warning #'muffle-warning))
@@ -24,9 +30,12 @@
       ("homepage" . ,(homepage (asdf:system-homepage system)))
       ("bug_tracker" . ,(bug-tracker (asdf:system-bug-tracker system)))
       ("source_control" . ,(source-control (asdf:system-source-control system)))
-      ("defsystem_depends_on" . ,(or (depends-on (asdf:system-defsystem-depends-on system) system-dir) #()))
-      ("depends_on" . ,(or (depends-on (asdf:system-depends-on system) system-dir) #()))
-      ("weakly_depends_on" . ,(or (depends-on (asdf:system-weakly-depends-on system) system-dir) #())))))
+      ("defsystem_depends_on" . ,(or (uniq (depends-on (asdf:system-defsystem-depends-on system) system-dir))
+                                     #()))
+      ("depends_on" . ,(or (uniq (depends-on (asdf:system-depends-on system) system-dir))
+                           #()))
+      ("weakly_depends_on" . ,(or (uniq (depends-on (asdf:system-weakly-depends-on system) system-dir))
+                                  #())))))
 
 (defun system-info (system)
   `(("name" . ,(ql-dist:name system))
