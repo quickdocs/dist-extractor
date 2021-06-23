@@ -142,15 +142,21 @@
     (check-type value (or string null))
     value))
 
+(defun emptyp (sequence)
+  (typecase sequence
+    (list (null sequence))
+    (sequence (zerop (length sequence)))
+    (otherwise nil)))
+
 (defun authors (value)
   (with-ignore-invalid (:author)
     (check-type value (or person-or-persons null))
-    (ensure-list value)))
+    (remove-if #'emptyp (ensure-list value))))
 
 (defun maintainers (value)
   (with-ignore-invalid (:maintainer)
     (check-type value (or person-or-persons null))
-    (ensure-list value)))
+    (remove-if #'emptyp (ensure-list value))))
 
 (defun mailto (value)
   (with-ignore-invalid (:mailto)
