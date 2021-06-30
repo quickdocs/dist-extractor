@@ -1,13 +1,20 @@
 .PHONY: all
 all: docker_image extract
 
+ifndef quicklisp_version
+override quicklisp_version = $(shell curl -s -L http://beta.quicklisp.org/dist/quicklisp.txt | grep '^version: ' | sed -e 's/version: //')
+endif
+
 ifndef version
-override version = $(shell curl -s -L http://beta.quicklisp.org/dist/quicklisp.txt | grep '^version: ' | sed -e 's/version: //')
+override version = $(shell curl -sL https://storage.googleapis.com/quickdocs-dist/quicklisp/info.json | jq -r '.latest_version')
 endif
 
 .PHONY: version
 version:
 	@echo "${version}"
+.PHONY: quicklisp_version
+quicklisp_version:
+	@echo "${quicklisp_version}"
 
 image_name = ghcr.io/quickdocs/quicklisp-dist-all
 .PHONY: docker_image

@@ -34,11 +34,18 @@ jobs:
           image_name=ghcr.io/quickdocs/quicklisp-dist-all
           version=$(docker images ghcr.io/quickdocs/quicklisp-dist-all | tail -n +2 | head -n 1 | awk '{ print $2 }')
           docker push "$image_name:$version"
-      - name: Extract the dist data
+      - name: Extract the dist data (push)
+        if: ${{ github.event_name == 'push' }}
         env:
           BUCKET_BASE_URL: https://storage.googleapis.com/quickdocs-dist
         run: |
           make generate-index extract
+      - name: Extract the dist data (schedule)
+        if: ${{ github.event_name == 'schedule' }}
+        env:
+          BUCKET_BASE_URL: https://storage.googleapis.com/quickdocs-dist
+        run: |
+          [ `make version` != `make quicklisp_version` ] && make generate-index extract
       - name: Upload to GCS
         if: github.ref == 'refs/heads/master'
         run: |
