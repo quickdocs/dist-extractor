@@ -25,7 +25,7 @@ docker_image:
 quicklisp-projects-version: quicklisp-projects
 	cd quicklisp-projects \
 		&& git checkout "quicklisp-${quicklisp_version}" 2>/dev/null \
-		|| git checkout `git rev-list -n 1 --first-parent --before="${quicklisp_version}T23:59:59Z" master`
+		|| git checkout `git rev-list -n 1 --first-parent --before="${quicklisp_version}T23:59:59-0400" master`
 quicklisp-projects:
 	git clone https://github.com/quicklisp/quicklisp-projects
 
