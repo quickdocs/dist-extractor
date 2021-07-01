@@ -30,7 +30,11 @@ scripts/dist.lisp "$dist" releases \
 ## Parsing releases
 current=0
 mkdir -p "$dist_dir/releases"
-releases=( $(cat "$destination/$dist/$version/releases.json" | jq -r '. | keys | .[]') )
+
+current_extracted_version=$(curl -sL https://storage.googleapis.com/quickdocs-dist/quicklisp/info.json | jq -r '.latest_version' 2>/dev/null || echo '0000-00-00')
+releases=( $(cat "$destination/$dist/$version/releases.json" | jq -r "to_entries | map(select(.value | scan(\"[0-9]{4}-[0-9]{2}-[0-9]{2}\") > \"${current_extracted_version}\")) | map(.key) | .[]") )
+echo "Extracting new/updated projects between $current_extracted_version...$version."
+
 for release in "${releases[@]}"; do
   current=$((++current))
   echo "[$current/${#releases[@]}] Release '${release}'"
