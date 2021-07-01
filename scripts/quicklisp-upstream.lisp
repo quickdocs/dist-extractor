@@ -22,6 +22,7 @@
 (define-upstream-source :wcpware-http)
 (define-upstream-source :latest-github-release)
 (define-upstream-source :latest-github-tag)
+(define-upstream-source :latest-gitlab-release)
 (define-upstream-source :tagged-git)
 (define-upstream-source :branched-git)
 (define-upstream-source :single-file)
