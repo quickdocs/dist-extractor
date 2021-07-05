@@ -32,11 +32,12 @@ current=0
 mkdir -p "$dist_dir/releases"
 
 current_extracted_version=$(curl -sL https://storage.googleapis.com/quickdocs-dist/quicklisp/info.json | jq -r '.latest_version' 2>/dev/null || echo '0000-00-00')
-if [ "$current_extracted_version" == "$version" ]; then
+if [ "$ALL" == 1 ] || [[ "$current_extracted_version" > "$version" ]]; then
+  releases=( $(cat "$destination/$dist/$version/releases.json" | jq -r '. | keys | .[]') )
+  echo "Extracting all projects in $version."
+elif [ "$current_extracted_version" == "$version" ]; then
   releases=( $(cat "$destination/$dist/$version/releases.json" | jq -r "to_entries | map(select(.value | scan(\"[0-9]{4}-[0-9]{2}-[0-9]{2}\") == \"${version}\")) | map(.key) | .[]") )
   echo "Extracting new/updated projects in $version."
-elif [ "$current_extracted_version" > "$version" ]; then
-  releases=( $(cat "$destination/$dist/$version/releases.json" | jq -r '. | keys | .[]') )
 else
   releases=( $(cat "$destination/$dist/$version/releases.json" | jq -r "to_entries | map(select(.value | scan(\"[0-9]{4}-[0-9]{2}-[0-9]{2}\") > \"${current_extracted_version}\")) | map(.key) | .[]") )
   echo "Extracting new/updated projects between $current_extracted_version...$version."

@@ -32,7 +32,7 @@ quicklisp-projects:
 .PHONY: extract
 extract: output/quicklisp/$(quicklisp_version)
 output/quicklisp/$(quicklisp_version): quicklisp-projects-version
-	docker run --rm -i -e BUCKET_BASE_URL=${BUCKET_BASE_URL} -v ${PWD}:/app "${image_name}:${quicklisp_version}" /app/extract.sh
+	docker run --rm -i -e BUCKET_BASE_URL=${BUCKET_BASE_URL} -e ALL=${ALL} -v ${PWD}:/app "${image_name}:${quicklisp_version}" /app/extract.sh
 
 .PHONY: generate-index
 generate-index:
