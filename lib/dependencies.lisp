@@ -1,5 +1,6 @@
 (defpackage #:dist-extractor/lib/dependencies
-  (:use #:cl)
+  (:use #:cl
+        #:dist-extractor/lib/asdf-types)
   (:export #:project-dependencies))
 (in-package #:dist-extractor/lib/dependencies)
 
@@ -28,52 +29,29 @@
                            (remove-if-not #'asd-file-p
                                           (uiop:directory-files dir)))
                    (mapcan #'collect-asd-files-in-directory (uiop:subdirectories dir)))))))
-    (collect-asd-files-in-directory directory)))
+    (sort
+      (collect-asd-files-in-directory directory)
+      #'string<
+      :key #'pathname-name)))
 
 (defvar *registry*)
 
 (defun read-asd-form (form asd-file)
-  (labels ((dep-list-name (dep)
-             (ecase (first dep)
-               ((:version :require) (second dep))
-               (:feature (third dep))))
-           (normalize (dep)
-             (cond
-               ((and (consp dep)
-                     (keywordp (car dep)))
-                (let ((name (dep-list-name dep)))
-                  (etypecase name
-                    ((or symbol string) (string-downcase name))
-                    (list (ecase (first name)
-                            (:require (normalize (second name))))))))
-               ((or (symbolp dep)
-                    (stringp dep))
-                (string-downcase dep))
-               (t (error "Can't normalize dependency: ~S" dep))))
-           (normalize-dependencies (dependencies)
-             (remove-if #'sbcl-contrib-p
-                        (remove-duplicates
-                          (mapcar #'normalize dependencies)
-                          :from-end t
-                          :test #'equal))))
-    (cond
-      ((not (consp form)) nil)
-      ((eq (first form) 'asdf:defsystem)
-       (destructuring-bind (system-name &rest system-form) (cdr form)
-         (let ((defsystem-depends-on (getf system-form :defsystem-depends-on))
-               (depends-on (getf system-form :depends-on))
-               (weakly-depends-on (getf system-form :weakly-depends-on))
-               (system-name (asdf::coerce-name system-name)))
-           (push (list system-name
-                       (remove system-name (normalize-dependencies defsystem-depends-on)
-                               :test 'equalp)
-                       (remove system-name (normalize-dependencies depends-on)
-                               :test 'equalp)
-                       (remove system-name (normalize-dependencies weakly-depends-on)
-                               :test 'equalp))
-                 (gethash asd-file *registry*)))))
-      ((macro-function (first form))
-       (read-asd-form (macroexpand-1 form) asd-file)))))
+  (cond
+    ((not (consp form)) nil)
+    ((eq (first form) 'asdf:defsystem)
+     (destructuring-bind (system-name &rest system-form) (cdr form)
+       (let ((defsystem-depends-on (getf system-form :defsystem-depends-on))
+             (depends-on (getf system-form :depends-on))
+             (weakly-depends-on (getf system-form :weakly-depends-on))
+             (system-name (asdf::coerce-name system-name)))
+         (push (list system-name
+                     (depends-on defsystem-depends-on asd-file)
+                     (depends-on depends-on asd-file)
+                     (depends-on weakly-depends-on asd-file))
+               (gethash asd-file *registry*)))))
+    ((macro-function (first form))
+     (read-asd-form (macroexpand-1 form) asd-file))))
 
 (defun make-hook (old-hook asd-file)
   (lambda (fun form env)
@@ -106,7 +84,8 @@
                           (lambda (,e)
                             (when (ignore-errors (slot-boundp (asdf/find-system:error-condition ,e) 'sb-c::condition))
                               (let ((,package (slot-value (slot-value (asdf/find-system:error-condition ,e) 'sb-c::condition) 'package)))
-                                (when (stringp ,package)
+                                (when (and (stringp ,package)
+                                           (not (gethash ,package ,retrying)))
                                   (setf (gethash ,package ,retrying) t)
                                   (ql:quickload ,package :silent t)
                                   (invoke-restart (find-restart 'asdf:retry ,e))))))))
@@ -125,8 +104,8 @@
           (let ((*macroexpand-hook* (make-hook *macroexpand-hook* system-file)))
             (asdf:load-asd system-file)))))
     (mapcar (lambda (system-file)
-                (let ((value (gethash system-file *registry*)))
-                  (cons system-file (nreverse value))))
+              (let ((value (gethash system-file *registry*)))
+                (cons system-file (nreverse value))))
             (sort (hash-keys *registry*)
                   #'string<
                   :key #'pathname-name))))

@@ -3,6 +3,7 @@
   (:use #:cl)
   (:export #:name
            #:long-name
+           #:system-class-name
            #:version
            #:description
            #:long-description
@@ -111,6 +112,13 @@
   (with-ignore-invalid (:long-name)
     (check-type value (or string null))
     value))
+
+(defun system-class-name (value)
+  (check-type value asdf:system)
+  (let ((name (class-name (class-of value)))
+        (*package* (find-package :asdf-user))
+        (*print-case* :downcase))
+    (prin1-to-string name)))
 
 (defun version (value &optional system-directory)
   (with-ignore-invalid (:version)

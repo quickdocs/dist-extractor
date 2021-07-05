@@ -63,18 +63,6 @@ for release in "${releases[@]}"; do
       2> >(tee -a "$release_dir/error.log" >&2) > "$release_dir/upstream_url.txt"
   upstream_url=$(cat "$release_dir/upstream_url.txt")
 
-  ## Parsing systems
-  mkdir -p "$release_dir/systems"
-  for system in `scripts/release.lisp "$release" systems`; do
-    system_dir="$release_dir/systems/$system"
-    mkdir -p "$system_dir"
-    timeout -k 10 -s TERM 60 \
-      scripts/system.lisp "$system" \
-          2> >(tee "$system_dir/error.log" >&2) \
-        | scripts/sexp-to-json.lisp > "$system_dir/info.json" 2> >(tee -a "$system_dir/error.log" >&2)
-    validate_json "$system_dir/info.json" 2> >(tee -a "$system_dir/error.log" >&2)
-  done
-
   version_and_prefix="$(cat "$release_dir/info.json" | jq -r '.archive_url' | sed -s -r 's!http://beta.quicklisp.org/archive/[^/]+/!!' | sed -s 's/\.tgz$//')"
   release_version=$(echo $version_and_prefix | sed -s -r 's![^/]+$!!')
   prefix=$(echo $version_and_prefix | sed -s -r 's!^[^/]+!!')
@@ -93,11 +81,6 @@ for release in "${releases[@]}"; do
 
   ## Output release readme.json
   cat "$release_dir/readme.json" | jq . -M > "$destination/$dist/$release_version/releases/$prefix/readme.json"
-
-  ## Concatenate system JSON files
-  find "$release_dir/systems" -name info.json | \
-    xargs jq -s 'map({(.name): .}) | add' \
-      > "$destination/$dist/$release_version/releases/$prefix/systems.json"
 done
 
 ## Concatenate error logs

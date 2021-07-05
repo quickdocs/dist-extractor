@@ -2,8 +2,11 @@
 
 (require 'asdf)
 (load (merge-pathnames #P"quicklisp/setup.lisp" (user-homedir-pathname)))
+(load (merge-pathnames #P"../lib/asdf-types.lisp" *load-pathname*))
 (load (merge-pathnames #P"../lib/dependencies.lisp" *load-pathname*))
 
+(do-external-symbols (symb :dist-extractor/lib/asdf-types)
+  (import symb))
 (do-external-symbols (symb :dist-extractor/lib/dependencies)
   (import symb))
 
@@ -22,6 +25,28 @@
           (ql-dist:prefix release)
           path))
 
+(defun uniq (list)
+  (remove-duplicates list
+                     :key (lambda (v) (cdr (assoc "name" v :test 'equal)))
+                     :test 'equal
+                     :from-end t))
+
+(defun asdf-system-metadata (system)
+  (let ((system-dir (asdf:system-source-directory system)))
+    `(("name" . ,(name (asdf:component-name system)))
+      ("class" . ,(system-class-name system))
+      ("long_name" . ,(long-name (asdf:system-long-name system)))
+      ("version" . ,(version (asdf:component-version system) system-dir))
+      ("description" . ,(description (asdf:system-description system)))
+      ("long_description" . ,(long-description (asdf:system-long-description system)))
+      ("authors" . ,(or (authors (asdf:system-author system)) #()))
+      ("maintainers" . ,(or (maintainers (asdf:system-maintainer system)) #()))
+      ("mailto" . ,(mailto (asdf:system-mailto system)))
+      ("license" . ,(license (asdf:system-license system)))
+      ("homepage" . ,(homepage (asdf:system-homepage system)))
+      ("bug_tracker" . ,(bug-tracker (asdf:system-bug-tracker system)))
+      ("source_control" . ,(source-control (asdf:system-source-control system))))))
+
 (defun release-info (release)
   `(("project_name" . ,(ql-dist:project-name release))
     ("archive_url" . ,(ql-dist:archive-url release))
@@ -32,16 +57,17 @@
      . ,(or (loop for (system-file . system-defs) in (project-dependencies (ql-dist:base-directory release))
                   append (loop for (system-name defsystem-depends-on depends-on weakly-depends-on) in system-defs
                                collect
-                               `(("name" . ,system-name)
-                                 ("system_file_name" . ,(pathname-name system-file))
-                                 ("required_systems" . ,(remove-duplicates
-                                                          (append defsystem-depends-on
-                                                                  depends-on
-                                                                  weakly-depends-on)
-                                                          :from-end t
-                                                          :test 'equal)))))
+                               (let ((system (let ((*standard-output* (make-broadcast-stream)))
+                                               (handler-bind ((warning #'muffle-warning))
+                                                 (asdf:find-system system-name)))))
+                                 (append
+                                   `(("name" . ,system-name)
+                                     ("system_file_name" . ,(pathname-name system-file)))
+                                   (asdf-system-metadata system)
+                                   `(("defsystem_depends_on" . ,(or (uniq defsystem-depends-on) #()))
+                                     ("depends_on" . ,(or (uniq depends-on) #()))
+                                     ("weakly_depends_on" . ,(or (uniq weakly-depends-on) #())))))))
             #()))
-    ("systems_metadata_url" . ,(bucket-release-url release "/systems.json"))
     ("readme_url" . ,(bucket-release-url release "/readme.json"))))
 
 (defun main ()
@@ -56,9 +82,6 @@
       (cond
         ((null command)
          (format t "~&~S~%" (release-info release)))
-        ((equal command "systems")
-         (dolist (system (ql-dist:provided-systems release))
-           (write-line (ql-dist:name system))))
         (t
          (error "Unexpected subcommand: '~A'" command))))))
 
