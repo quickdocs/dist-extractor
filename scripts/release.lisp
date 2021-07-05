@@ -33,8 +33,7 @@
 
 (defun asdf-system-metadata (system)
   (let ((system-dir (asdf:system-source-directory system)))
-    `(("name" . ,(name (asdf:component-name system)))
-      ("class" . ,(system-class-name system))
+    `(("class" . ,(system-class-name system))
       ("long_name" . ,(long-name (asdf:system-long-name system)))
       ("version" . ,(version (asdf:component-version system) system-dir))
       ("description" . ,(description (asdf:system-description system)))
@@ -56,17 +55,28 @@
     ("systems"
      . ,(or (loop for (system-file . system-defs) in (project-dependencies (ql-dist:base-directory release))
                   append (loop for (system-name defsystem-depends-on depends-on weakly-depends-on) in system-defs
-                               collect
+                               append
                                (let ((system (let ((*standard-output* (make-broadcast-stream)))
                                                (handler-bind ((warning #'muffle-warning))
                                                  (asdf:find-system system-name)))))
-                                 (append
-                                   `(("name" . ,system-name)
-                                     ("system_file_name" . ,(pathname-name system-file)))
-                                   (asdf-system-metadata system)
-                                   `(("defsystem_depends_on" . ,(or (uniq defsystem-depends-on) #()))
-                                     ("depends_on" . ,(or (uniq depends-on) #()))
-                                     ("weakly_depends_on" . ,(or (uniq weakly-depends-on) #())))))))
+                                 (list*
+                                   (append
+                                     `(("name" . ,system-name)
+                                       ("system_file_name" . ,(pathname-name system-file)))
+                                     (asdf-system-metadata system)
+                                     `(("defsystem_depends_on" . ,(or (uniq defsystem-depends-on) #()))
+                                       ("depends_on" . ,(or (uniq depends-on) #()))
+                                       ("weakly_depends_on" . ,(or (uniq weakly-depends-on) #()))))
+                                   (when (typep system 'asdf:package-inferred-system)
+                                     (loop for file in (directory-lisp-files (asdf:component-pathname system))
+                                           for system-name = (lisp-file-system-name file)
+                                           when system-name
+                                           collect `(("name" . ,system-name)
+                                                     ("class" . "package-inferred-system")
+                                                     ("depends_on" . ,(or (uniq (mapcar (lambda (name)
+                                                                                          `(("name" . ,(string-downcase name))))
+                                                                                        (lisp-file-dependencies file)))
+                                                                          #())))))))))
             #()))
     ("readme_url" . ,(bucket-release-url release "/readme.json"))))
 

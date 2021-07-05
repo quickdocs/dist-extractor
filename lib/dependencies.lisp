@@ -1,7 +1,10 @@
 (defpackage #:dist-extractor/lib/dependencies
   (:use #:cl
         #:dist-extractor/lib/asdf-types)
-  (:export #:project-dependencies))
+  (:export #:project-dependencies
+           #:directory-lisp-files
+           #:lisp-file-system-name
+           #:lisp-file-dependencies))
 (in-package #:dist-extractor/lib/dependencies)
 
 (defparameter *exclude-directories*
@@ -46,9 +49,9 @@
              (weakly-depends-on (getf system-form :weakly-depends-on))
              (system-name (asdf::coerce-name system-name)))
          (push (list system-name
-                     (depends-on defsystem-depends-on asd-file)
-                     (depends-on depends-on asd-file)
-                     (depends-on weakly-depends-on asd-file))
+                     (depends-on defsystem-depends-on (uiop:pathname-directory-pathname asd-file))
+                     (depends-on depends-on (uiop:pathname-directory-pathname asd-file))
+                     (depends-on weakly-depends-on (uiop:pathname-directory-pathname asd-file)))
                (gethash asd-file *registry*)))))
     ((macro-function (first form))
      (read-asd-form (macroexpand-1 form) asd-file))))
@@ -58,7 +61,8 @@
     (when (and (consp form)
                (eq (first form) 'asdf:defsystem)
                (and (equal *load-pathname* asd-file)))
-      (read-asd-form form asd-file))
+      (let ((*default-pathname-defaults* (uiop:pathname-directory-pathname asd-file)))
+        (read-asd-form form asd-file)))
     (funcall old-hook fun form env)))
 
 (defun hash-keys (hash)
@@ -109,3 +113,28 @@
             (sort (hash-keys *registry*)
                   #'string<
                   :key #'pathname-name))))
+
+(defun directory-lisp-files (directory)
+  (append (uiop:directory-files directory "*.lisp")
+          (loop for subdir in (uiop:subdirectories directory)
+                for dir-name = (car (last (pathname-directory subdir)))
+                unless (or (find dir-name
+                                 *exclude-directories*
+                                 :test 'string=)
+                           (char= (aref dir-name 0) #\.))
+                append (directory-lisp-files subdir))))
+
+(defun lisp-file-system-name (file)
+  (block nil
+    (handler-bind ((error
+                     (lambda (e)
+                       (declare (ignorable e))
+                       ;;(uiop:print-condition-backtrace e)
+                       (return nil))))
+      (let ((defpackage-form (asdf/package-inferred-system::file-defpackage-form file)))
+        (if defpackage-form
+            (string-downcase (second defpackage-form))
+            nil)))))
+
+(defun lisp-file-dependencies (file)
+  (asdf/package-inferred-system::package-inferred-system-file-dependencies file))

@@ -65,12 +65,14 @@
                (string value)
                (symbol (string-downcase value))
                (cons (ecase (first value)
-                       (:read-file-form (apply #'uiop:read-file-form
-                                               (merge-pathnames (second value) system-directory)
-                                               (rest (rest value))))
-                       (:read-file-line (apply #'uiop:read-file-line
-                                               (merge-pathnames (second value) system-directory)
-                                               (rest (rest value))))))))
+                       (:read-file-form
+                        (apply #'uiop:read-file-form
+                               (merge-pathnames (second value) system-directory)
+                               (rest (rest value))))
+                       (:read-file-line
+                        (apply #'uiop:read-file-line
+                               (merge-pathnames (second value) system-directory)
+                               (rest (rest value))))))))
            (dependency-def (value)
              (typecase value
                (cons (ecase (first value)
