@@ -53,7 +53,7 @@
     ("archive_content_sha1" . ,(ql-dist:archive-content-sha1 release))
     ("prefix" . ,(ql-dist:prefix release))
     ("systems"
-     . ,(or (loop for (system-file . system-defs) in (project-dependencies (ql-dist:base-directory release))
+     . ,(or (loop for (system-file . system-defs) in (project-dependencies release)
                   append (loop for (system-name defsystem-depends-on depends-on weakly-depends-on) in system-defs
                                append
                                (let ((system (let ((*standard-output* (make-broadcast-stream)))

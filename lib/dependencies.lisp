@@ -15,28 +15,6 @@
     (and (<= 3 (length name))
          (string-equal name "sb-" :end1 3))))
 
-(defun directory-system-files (directory)
-  (labels ((asd-file-p (path)
-             (and (equal (pathname-type path) "asd")
-                  ;; KLUDGE: Ignore skeleton.asd of CL-Project
-                  (not (search "skeleton" (pathname-name path)))))
-           (collect-asd-files-in-directory (dir)
-             (let ((dir-name (car (last (pathname-directory dir)))))
-               (unless (or (find dir-name
-                                 *exclude-directories*
-                                 :test #'string=)
-                           (and (stringp dir-name)
-                                (char= (aref dir-name 0) #\.)))
-                 (nconc
-                   (mapcar #'truename
-                           (remove-if-not #'asd-file-p
-                                          (uiop:directory-files dir)))
-                   (mapcan #'collect-asd-files-in-directory (uiop:subdirectories dir)))))))
-    (sort
-      (collect-asd-files-in-directory directory)
-      #'string<
-      :key #'pathname-name)))
-
 (defvar *registry*)
 
 (defun read-asd-form (form asd-file)
@@ -95,9 +73,14 @@
                                   (invoke-restart (find-restart 'asdf:retry ,e))))))))
            ,@body)))))
 
-(defun project-dependencies (directory)
-  (let ((*registry* (make-hash-table :test 'equal)))
-    (dolist (system-file (directory-system-files directory))
+(defun project-dependencies (release)
+  (check-type release ql-dist:release)
+  (let ((*registry* (make-hash-table :test 'equal))
+        (base-dir (ql-dist:base-directory release))
+        (system-files (ql-dist:system-files release)))
+    (dolist (system-file (mapcar (lambda (file)
+                                   (merge-pathnames file base-dir))
+                                 system-files))
       (handler-bind ((error
                        (lambda (e)
                          (uiop:print-condition-backtrace e)
