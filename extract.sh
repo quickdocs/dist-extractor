@@ -32,7 +32,7 @@ current=0
 mkdir -p "$dist_dir/releases"
 
 current_extracted_version=$(curl -sL https://storage.googleapis.com/quickdocs-dist/quicklisp/info.json | jq -r '.latest_version' 2>/dev/null || echo '0000-00-00')
-if [ "$ALL" == 1 ] || [[ "$current_extracted_version" > "$version" ]]; then
+if [ "$EXTRACT_ALL" == 1 ] || [[ "$current_extracted_version" > "$version" ]]; then
   releases=( $(cat "$destination/$dist/$version/releases.json" | jq -r '. | keys | .[]') )
   echo "Extracting all projects in $version."
 elif [ "$current_extracted_version" == "$version" ]; then
