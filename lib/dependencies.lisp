@@ -89,7 +89,8 @@
                              (invoke-restart restart))))))
         (with-autoload-on-missing
           (let ((*macroexpand-hook* (make-hook *macroexpand-hook* system-file)))
-            (asdf:load-asd system-file)))))
+            (handler-bind ((warning #'muffle-warning))
+              (asdf:load-asd system-file))))))
     (mapcar (lambda (system-file)
               (let ((value (gethash system-file *registry*)))
                 (cons system-file (nreverse value))))
