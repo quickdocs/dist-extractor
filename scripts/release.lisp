@@ -1,6 +1,11 @@
 #!/usr/local/bin/sbcl --script
 
+(require 'asdf)
 (load (merge-pathnames #P"quicklisp/setup.lisp" (user-homedir-pathname)))
+(load (merge-pathnames #P"../lib/dependencies.lisp" *load-pathname*))
+
+(do-external-symbols (symb :dist-extractor/lib/dependencies)
+  (import symb))
 
 (defun release-last-updated-version (release)
   (let* ((dist (ql-dist:dist release))
@@ -23,11 +28,19 @@
     ("archive_size" . ,(ql-dist:archive-size release))
     ("archive_content_sha1" . ,(ql-dist:archive-content-sha1 release))
     ("prefix" . ,(ql-dist:prefix release))
-    ("systems" . ,(mapcar (lambda (system)
-                            `(("name" . ,(ql-dist:name system))
-                              ("system_file_name" . ,(ql-dist:system-file-name system))
-                              ("required_systems" . ,(or (ql-dist:required-systems system) #()))))
-                          (ql-dist:provided-systems release)))
+    ("systems"
+     . ,(or (loop for (system-file . system-defs) in (project-dependencies (ql-dist:base-directory release))
+                  append (loop for (system-name defsystem-depends-on depends-on weakly-depends-on) in system-defs
+                               collect
+                               `(("name" . ,system-name)
+                                 ("system_file_name" . ,(pathname-name system-file))
+                                 ("required_systems" . ,(remove-duplicates
+                                                          (append defsystem-depends-on
+                                                                  depends-on
+                                                                  weakly-depends-on)
+                                                          :from-end t
+                                                          :test 'equal)))))
+            #()))
     ("systems_metadata_url" . ,(bucket-release-url release "/systems.json"))
     ("readme_url" . ,(bucket-release-url release "/readme.json"))))
 
