@@ -14,7 +14,8 @@
            #:homepage
            #:bug-tracker
            #:source-control
-           #:depends-on))
+           #:depends-on
+           #:dependency-name))
 (in-package #:dist-extractor/lib/asdf-types)
 
 ;;
@@ -83,6 +84,19 @@
                        (:require `(("name" . ,(component-name (second value)))))))
                (otherwise `(("name" . ,(component-name value)))))))
     (dependency-def name)))
+
+(defun dependency-name (value)
+  (flet ((component-name (value)
+           (etypecase value
+             (string value)
+             (symbol (string-downcase value)))))
+    (etypecase value
+      (cons
+        (ecase (first value)
+          (:feature (dependency-name (third value)))
+          (:version (component-name (second value)))
+          (:require (component-name (second value)))))
+      ((or string symbol) (component-name value)))))
 
 ;;
 ;; Utilities
