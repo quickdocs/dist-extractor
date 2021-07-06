@@ -45,6 +45,10 @@ remove_if_exists() {
 
 upload_release() {
   release=$1
+
+  # Delete systems directory which is not used anymore
+  gsutil -m rm -r "gs://quickdocs-dist/$release/systems"
+
   for file in `ls $release`; do
     upload_if_changed "${release}${file}"
   done
