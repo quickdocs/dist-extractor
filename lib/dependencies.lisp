@@ -26,6 +26,8 @@
              (depends-on (getf system-form :depends-on))
              (weakly-depends-on (getf system-form :weakly-depends-on))
              (system-name (asdf::coerce-name system-name)))
+         (let ((*standard-output* (make-broadcast-stream)))
+           (mapc #'asdf:load-system defsystem-depends-on))
          (push (list system-name
                      (depends-on defsystem-depends-on (uiop:pathname-directory-pathname asd-file))
                      (depends-on depends-on (uiop:pathname-directory-pathname asd-file))
