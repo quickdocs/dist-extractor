@@ -78,6 +78,7 @@
                                                                                         (lisp-file-dependencies file)))
                                                                           #())))))))))
             #()))
+    ("systems_metadata_url" . ,(bucket-release-url release "/systems.json"))
     ("readme_url" . ,(bucket-release-url release "/readme.json"))))
 
 (defun main ()

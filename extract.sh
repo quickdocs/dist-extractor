@@ -80,6 +80,34 @@ for release in "${releases[@]}"; do
   cat "$release_dir/info.json" | jq ". += {\"upstream_url\": \"$upstream_url\"}" -M \
     > "$destination/$dist/$release_version/releases/$prefix/info.json"
 
+  ## Output systems.json
+  cat "$release_dir/info.json" \
+    | jq -r '.systems
+    | map({
+      (.name): {
+        name,
+        system_file_name,
+        required_systems: (.defsystem_depends_on + .depends_on + .weakly_depends_on),
+        metadata: {
+          name,
+          long_name,
+          version,
+          description,
+          long_description,
+          authors,
+          maintainers,
+          mailto,
+          license,
+          homepage,
+          bug_tracker,
+          source_control,
+          defsystem_depends_on,
+          depends_on,
+          weakly_depends_on
+        }
+      }
+    }) | add' > "$destination/$dist/$release_version/releases/$prefix/systems.json"
+
   ## Output release readme.json
   cat "$release_dir/readme.json" | jq . -M > "$destination/$dist/$release_version/releases/$prefix/readme.json"
 done
