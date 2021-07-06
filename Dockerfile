@@ -9,7 +9,12 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.schema-version="1.0"
 
 RUN set -x; \
-  apt-get update && apt-get -y install --no-install-recommends jq && \
+  apt-get update && apt-get -y install --no-install-recommends \
+    jq \
+    # For cl-fuse
+    libfuse-dev \
+    # For IOLib
+    libfixposix-dev && \
   rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
