@@ -15,13 +15,14 @@
 
 (defun supported-encoding-p (encoding)
   (when (stringp encoding)
-    (and
-      (uiop:run-program
-        (format nil "iconv -l | grep -i '^~A//$'"
-                encoding)
-        :ignore-error-status t
-        :output :string)
-      t)))
+    (handler-case
+        (and (uiop:run-program
+               (format nil "iconv -l | grep -i '^~A//$'"
+                       encoding)
+               :output :string)
+             t)
+      (uiop:subprocess-error ()
+        nil))))
 
 (defun file-size (file)
   (with-open-file (in file)
