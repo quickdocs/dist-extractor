@@ -112,17 +112,42 @@
                            (char= (aref dir-name 0) #\.))
                 append (directory-lisp-files subdir))))
 
-(defun lisp-file-system-name (file)
+(defun starts-with (prefix value)
+  (check-type prefix string)
+  (check-type value string)
+  (and (<= (length prefix) (length value))
+       (string= prefix value :end2 (length prefix))))
+
+(defun lisp-file-system-name (file root primary-system-name)
   (block nil
     (handler-bind ((error
                      (lambda (e)
                        (declare (ignorable e))
                        ;;(uiop:print-condition-backtrace e)
                        (return nil))))
-      (let ((defpackage-form (asdf/package-inferred-system::file-defpackage-form file)))
-        (if defpackage-form
-            (string-downcase (second defpackage-form))
-            nil)))))
+      (flet ((primary-system-prefix-p (package-name)
+               (check-type package-name string)
+               (starts-with (format nil "~A/" primary-system-name) package-name)))
+        (let ((defpackage-form (asdf/package-inferred-system::file-defpackage-form file)))
+          (when defpackage-form
+            (let* ((package-names (mapcar #'string-downcase
+                                          (cons (second defpackage-form)
+                                                (cdr
+                                                  (assoc :nicknames (cddr defpackage-form)
+                                                         :test #'string=)))))
+                   (system-name (find-if
+                                  (lambda (name)
+                                    (and (primary-system-prefix-p name)
+                                         (uiop:pathname-equal
+                                           (merge-pathnames
+                                             (format nil "~A~@[.~A~]"
+                                                     (subseq name (1+ (length primary-system-name)))
+                                                     (pathname-type file))
+                                             root)
+                                           file)))
+                                  package-names)))
+              (when system-name
+                (string-downcase system-name)))))))))
 
 (defun lisp-file-dependencies (file)
   (asdf/package-inferred-system::package-inferred-system-file-dependencies file))

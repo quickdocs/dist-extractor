@@ -69,9 +69,11 @@
                                        ("weakly_depends_on" . ,(or (uniq weakly-depends-on) #()))))
                                    (when (typep system 'asdf:package-inferred-system)
                                      (loop for file in (directory-lisp-files (asdf:component-pathname system))
-                                           for system-name = (lisp-file-system-name file)
-                                           when system-name
-                                           collect `(("name" . ,system-name)
+                                           for sub-system-name = (lisp-file-system-name file
+                                                                                        (asdf:component-pathname system)
+                                                                                        system-name)
+                                           when sub-system-name
+                                           collect `(("name" . ,sub-system-name)
                                                      ("class" . "package-inferred-system")
                                                      ("depends_on" . ,(or (uniq (mapcar (lambda (name)
                                                                                           `(("name" . ,(string-downcase name))))
