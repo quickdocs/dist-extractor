@@ -37,12 +37,15 @@
     ((macro-function (first form))
      (read-asd-form (macroexpand-1 form) asd-file))))
 
+(defvar *in-defsystem* nil)
 (defun make-hook (old-hook asd-file)
   (lambda (fun form env)
     (when (and (consp form)
                (eq (first form) 'asdf:defsystem)
+               (not *in-defsystem*)
                (and (equal *load-pathname* asd-file)))
-      (let ((*default-pathname-defaults* (uiop:pathname-directory-pathname asd-file)))
+      (let ((*in-defsystem* t)
+            (*default-pathname-defaults* (uiop:pathname-directory-pathname asd-file)))
         (read-asd-form form asd-file)))
     (funcall old-hook fun form env)))
 
