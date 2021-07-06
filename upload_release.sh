@@ -45,10 +45,6 @@ remove_if_exists() {
 
 upload_release() {
   release=$1
-
-  # Delete systems.json which is not used anymore
-  remove_if_exists "${release}systems.json"
-
   for file in `ls $release`; do
     upload_if_changed "${release}${file}"
   done
