@@ -23,7 +23,15 @@
         :output :string)
       t)))
 
+(defun file-size (file)
+  (with-open-file (in file)
+    (file-length in)))
+
 (defun read-file-in-utf-8 (file)
+  (let ((size (file-size file)))
+    (when (= size 0)
+      (return-from read-file-in-utf-8 "")))
+
   (let ((encoding (file-encoding file)))
     (uiop:run-program `("iconv"
                         ,@(when (supported-encoding-p encoding)
