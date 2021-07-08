@@ -96,8 +96,9 @@
             (handler-bind ((warning #'muffle-warning))
               (let ((*standard-output* (make-broadcast-stream))
                     (asdf:*system-definition-search-functions*
-                      (remove 'asdf/system-registry:sysdef-source-registry-search
-                              asdf:*system-definition-search-functions*)))
+                      (cons 'ql-dist:system-definition-searcher
+                            (remove 'ql-dist:system-definition-searcher
+                                    asdf:*system-definition-search-functions*))))
                 (asdf:load-asd system-file)))))))
     (mapcar (lambda (system-file)
               (let ((value (gethash system-file *registry*)))
