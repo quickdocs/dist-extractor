@@ -42,10 +42,8 @@
   (lambda (fun form env)
     (when (and (consp form)
                (eq (first form) 'asdf:defsystem)
-               (not *in-defsystem*)
-               (and (equal *load-pathname* asd-file)))
-      (let ((*in-defsystem* t)
-            (*default-pathname-defaults* (uiop:pathname-directory-pathname asd-file)))
+               (not *in-defsystem*))
+      (let ((*in-defsystem* t))
         (read-asd-form form asd-file)))
     (funcall old-hook fun form env)))
 
@@ -96,7 +94,10 @@
         (with-autoload-on-missing
           (let ((*macroexpand-hook* (make-hook *macroexpand-hook* system-file)))
             (handler-bind ((warning #'muffle-warning))
-              (let ((*standard-output* (make-broadcast-stream)))
+              (let ((*standard-output* (make-broadcast-stream))
+                    (asdf:*system-definition-search-functions*
+                      (remove 'asdf/system-registry:sysdef-source-registry-search
+                              asdf:*system-definition-search-functions*)))
                 (asdf:load-asd system-file)))))))
     (mapcar (lambda (system-file)
               (let ((value (gethash system-file *registry*)))
