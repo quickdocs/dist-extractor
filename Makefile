@@ -1,6 +1,8 @@
 .PHONY: all
 all: docker_image extract
 
+BUCKET_BASE_URL=https://storage.googleapis.com/quickdocs-dist
+
 ifndef quicklisp_version
 override quicklisp_version = $(shell curl -s -L http://beta.quicklisp.org/dist/quicklisp.txt | grep '^version: ' | sed -e 's/version: //')
 endif
@@ -36,7 +38,7 @@ output/quicklisp/$(quicklisp_version): quicklisp-projects-version
 
 .PHONY: generate-index
 generate-index:
-	./generate-index.sh quicklisp ${quicklisp_version}
+	BUCKET_BASE_URL=${BUCKET_BASE_URL} ./generate-index.sh quicklisp ${quicklisp_version}
 
 .PHONY: upload
 upload:
