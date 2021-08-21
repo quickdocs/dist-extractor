@@ -41,7 +41,12 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" == "push" ]; then
             EXTRACT_ALL=1
           fi
-          make generate-index extract EXTRACT_ALL=${EXTRACT_ALL}
+          version=$(make version)
+          if [ "$version" = "$(make quicklisp_version)" ]; then
+            echo "No updates until the version '$version'."
+          else
+            make generate-index extract EXTRACT_ALL=${EXTRACT_ALL}
+          fi
       - name: Upload to GCS
         if: github.ref == 'refs/heads/master'
         run: |

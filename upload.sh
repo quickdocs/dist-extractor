@@ -37,6 +37,11 @@ upload_if_changed() {
   fi
 }
 
+if [ ! -d "$directory" ]; then
+  echo "Directory '$directory' doesn't exist. Nothing to upload."
+  exit
+fi
+
 cd "$directory"
 for entry in `ls $dist`; do
   if [ -f "$dist/$entry" ]; then
