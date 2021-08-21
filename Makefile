@@ -47,3 +47,21 @@ upload:
 .PHONY: clean
 clean:
 	rm -rf output .output
+
+# GitHub API
+.PHONY: github_deployment github_deployment_status
+github_deployment:
+	@echo $(shell curl -s -X POST \
+		-H "Authorization: token ${GITHUB_TOKEN}" \
+		-H 'Accept: application/vnd.github.v3+json' \
+		https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments -d '{"ref":"master"}' \
+		| jq -r '.id')
+
+github_deployment_status:
+	@echo $(shell curl -s -X POST \
+		-H "Authorization: token ${GITHUB_TOKEN}" \
+		-H 'Content-Type: application/json' \
+		-H 'Accept: application/vnd.github.flash-preview+json' \
+		https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}/statuses \
+		-d "{\"state\":\"${state}\", \"description\":\"${description}\", \"log_url\":\"${log_url}\"}" \
+		| jq -r '.id')

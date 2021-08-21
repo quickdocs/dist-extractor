@@ -37,17 +37,41 @@ jobs:
       - name: Extract the dist data
         env:
           BUCKET_BASE_URL: https://storage.googleapis.com/quickdocs-dist
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "$GITHUB_EVENT_NAME" == "push" ]; then
             EXTRACT_ALL=1
           fi
           version=$(make version)
-          if [ "$version" = "$(make quicklisp_version)" ]; then
+          if [ ! $EXTRACT_ALL ] && [ "$version" = "$(make quicklisp_version)" ]; then
             echo "No updates until the version '$version'."
           else
+            # Create a deployment
+            make github_deployment > github_deployment_id
+            # Change the deployment status to 'in_progress'
+            github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/runs/$GITHUB_RUN_ID"
+            make github_deployment_status \
+              deployment_id=$(cat github_deployment_id) \
+              description="Extracting version '$version'" \
+              state=in_progress \
+              log_url=$github_run_url
+            # Extract
             make generate-index extract EXTRACT_ALL=${EXTRACT_ALL}
           fi
       - name: Upload to GCS
         if: github.ref == 'refs/heads/master'
         run: |
-          make upload
+          if [ -d ./output ]; then
+            github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/runs/$GITHUB_RUN_ID"
+            make github_deployment_status \
+              deployment_id=$(cat github_deployment_id) \
+              description="Uploading version '$version'" \
+              state=in_progress \
+              log_url=$github_run_url
+            make upload
+            make github_deployment_status \
+              deployment_id=$(cat github_deployment_id) \
+              description="Successfully extracted version '$version'" \
+              state=success \
+              log_url=$github_run_url
+          fi
