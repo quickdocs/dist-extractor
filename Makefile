@@ -51,15 +51,15 @@ clean:
 # GitHub API
 .PHONY: github_deployment github_deployment_status
 github_deployment:
-	@echo $(shell curl -s -X POST \
+	curl -s -X POST \
 		-H "Authorization: token ${GITHUB_TOKEN}" \
 		-H 'Accept: application/vnd.github.v3+json' \
-		https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments -d '{"ref":"master","required_contexts":[]}')
+		https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments -d '{"ref":"master","required_contexts":[]}'
 
 github_deployment_status:
-	@echo $(shell curl -s -X POST \
+	curl -s -X POST \
 		-H "Authorization: token ${GITHUB_TOKEN}" \
 		-H 'Content-Type: application/json' \
 		-H 'Accept: application/vnd.github.v3+json, application/vnd.github.flash-preview+json' \
 		https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}/statuses \
-		-d "{\"state\":\"${state}\", \"description\":\"${description}\", \"log_url\":\"${log_url}\"}")
+		-d "{\"state\":\"${state}\", \"description\":\"${description}\", \"log_url\":\"${log_url}\"}"
