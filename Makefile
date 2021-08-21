@@ -54,7 +54,8 @@ github_deployment:
 	curl -s -X POST \
 		-H "Authorization: token ${GITHUB_TOKEN}" \
 		-H 'Accept: application/vnd.github.v3+json' \
-		https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments -d '{"ref":"master","required_contexts":[]}'
+		https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments \
+		-d "{\"ref\":\"master\",\"required_contexts\":[],\"payload\":{\"version\":\"${version}\"}}"
 
 github_deployment_status:
 	curl -s -X POST \
@@ -62,4 +63,4 @@ github_deployment_status:
 		-H 'Content-Type: application/json' \
 		-H 'Accept: application/vnd.github.v3+json, application/vnd.github.flash-preview+json' \
 		https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}/statuses \
-		-d "{\"state\":\"${state}\", \"description\":\"${description}\", \"log_url\":\"${log_url}\"}"
+		-d "{\"state\":\"${state}\", \"description\":\"${description}\", \"log_url\":\"${log_url}\", \"environment_url\":\"${environment_url}\"}"

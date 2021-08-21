@@ -80,5 +80,6 @@ jobs:
               deployment_id=$deployment_id \
               description="Successfully extracted version '$version'" \
               state=success \
-              log_url=$github_run_url
+              log_url=$github_run_url \
+              environment_url="https://storage.googleapis.com/quickdocs-dist/quicklisp/$(make quicklisp_version)/info.json"
           fi
