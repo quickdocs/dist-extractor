@@ -57,7 +57,7 @@ jobs:
             # Change the deployment status to 'in_progress'
             github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/runs/$GITHUB_RUN_ID"
             make github_deployment_status \
-              deployment_id=$(cat github_deployment_id) \
+              deployment_id=$deployment_id \
               description="Extracting version '$version'" \
               state=in_progress \
               log_url=$github_run_url
