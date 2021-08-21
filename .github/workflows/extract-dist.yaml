@@ -47,7 +47,13 @@ jobs:
             echo "No updates until the version '$version'."
           else
             # Create a deployment
-            make github_deployment > github_deployment_id
+            make github_deployment > github_deployment
+            deployment_id=$(cat github_deployment | jq -r '.id')
+            if [ $? -ne 0 ]; then
+              echo "Failed to create a deployment"
+              exit 1
+            fi
+            echo "Deployment ID: $deployment_id"
             # Change the deployment status to 'in_progress'
             github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/runs/$GITHUB_RUN_ID"
             make github_deployment_status \
@@ -63,14 +69,15 @@ jobs:
         run: |
           if [ -d ./output ]; then
             github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/runs/$GITHUB_RUN_ID"
+            deployment_id=$(cat github_deployment | jq -r '.id')
             make github_deployment_status \
-              deployment_id=$(cat github_deployment_id) \
+              deployment_id=$deployment_id \
               description="Uploading version '$version'" \
               state=in_progress \
               log_url=$github_run_url
             make upload
             make github_deployment_status \
-              deployment_id=$(cat github_deployment_id) \
+              deployment_id=$deployment_id \
               description="Successfully extracted version '$version'" \
               state=success \
               log_url=$github_run_url
