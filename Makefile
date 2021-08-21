@@ -55,7 +55,7 @@ github_deployment:
 		-H "Authorization: token ${GITHUB_TOKEN}" \
 		-H 'Accept: application/vnd.github.v3+json' \
 		https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments \
-		-d "{\"ref\":\"master\",\"required_contexts\":[],\"payload\":{\"version\":\"${version}\"}}"
+		-d "{\"ref\":\"master\",\"required_contexts\":[],\"payload\":{\"version\":\"${quicklisp_version}\"}}"
 
 github_deployment_status:
 	curl -s -X POST \

@@ -42,9 +42,9 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" == "push" ]; then
             EXTRACT_ALL=1
           fi
-          version=$(make version)
-          if [ ! $EXTRACT_ALL ] && [ "$version" = "$(make quicklisp_version)" ]; then
-            echo "No updates until the version '$version'."
+          quicklisp_version=$(make quicklisp_version)
+          if [ ! $EXTRACT_ALL ] && [ "$(make version)" = "$quicklisp_version" ]; then
+            echo "No updates until the version '$quicklisp_version'."
           else
             # Create a deployment
             make -s github_deployment > >(tee github_deployment)
@@ -58,7 +58,7 @@ jobs:
             github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             make github_deployment_status \
               deployment_id=$deployment_id \
-              description="Extracting version '$version'" \
+              description="Extracting version '$quicklisp_version'" \
               state=in_progress \
               log_url=$github_run_url
             # Extract
@@ -72,18 +72,19 @@ jobs:
           if [ -d ./output ]; then
             github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             deployment_id=$(cat github_deployment | jq -r '.id')
+            quicklisp_version=$(make quicklisp_version)
             make github_deployment_status \
               deployment_id=$deployment_id \
-              description="Uploading version '$version'" \
+              description="Uploading version '$quicklisp_version'" \
               state=in_progress \
               log_url=$github_run_url
             make upload
             make github_deployment_status \
               deployment_id=$deployment_id \
-              description="Successfully extracted version '$version'" \
+              description="Successfully extracted version '$quicklisp_version'" \
               state=success \
               log_url=$github_run_url \
-              environment_url="https://storage.googleapis.com/quickdocs-dist/quicklisp/$(make quicklisp_version)/info.json"
+              environment_url="https://storage.googleapis.com/quickdocs-dist/quicklisp/$quicklisp_version/info.json"
           fi
       - name: Finalize the deployment
         if: always()
@@ -98,7 +99,7 @@ jobs:
                 github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
                 make github_deployment_status \
                   deployment_id=$deployment_id \
-                  description="Failure" \
+                  description="Failed to extract version '$(make quicklisp_version)'" \
                   state=failure \
                   log_url=$github_run_url
                 ;;
