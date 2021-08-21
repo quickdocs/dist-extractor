@@ -54,7 +54,7 @@ github_deployment:
 	@echo $(shell curl -s -X POST \
 		-H "Authorization: token ${GITHUB_TOKEN}" \
 		-H 'Accept: application/vnd.github.v3+json' \
-		https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments -d '{"ref":"master"}')
+		https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments -d '{"ref":"master","required_contexts":[]}')
 
 github_deployment_status:
 	@echo $(shell curl -s -X POST \
