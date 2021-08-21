@@ -47,7 +47,7 @@ jobs:
             echo "No updates until the version '$version'."
           else
             # Create a deployment
-            make github_deployment > github_deployment
+            make github_deployment > >(tee github_deployment)
             deployment_id=$(cat github_deployment | jq -r '.id')
             if [ $? -ne 0 ]; then
               echo "Failed to create a deployment"
