@@ -61,6 +61,6 @@ github_deployment_status:
 	curl -s -X POST \
 		-H "Authorization: token ${GITHUB_TOKEN}" \
 		-H 'Content-Type: application/json' \
-		-H 'Accept: application/vnd.github.v3+json, application/vnd.github.flash-preview+json' \
+		-H 'Accept: application/vnd.github.v3+json, application/vnd.github.flash-preview+json, application/vnd.github.ant-man-preview+json' \
 		https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}/statuses \
 		-d "{\"state\":\"${state}\", \"description\":\"${description}\", \"log_url\":\"${log_url}\", \"environment_url\":\"${environment_url}\"}"
