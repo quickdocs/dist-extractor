@@ -66,6 +66,8 @@ jobs:
           fi
       - name: Upload to GCS
         if: github.ref == 'refs/heads/master'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -d ./output ]; then
             github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/runs/$GITHUB_RUN_ID"
@@ -87,13 +89,10 @@ jobs:
         if: always()
         run: |
           if [ -f github_deployment ]; then
-            deployment_statuses_url=$(cat github_deployment | jq -r '.statuses_url')
-            curl -i -H "Authorization: token $GITHUB_TOKEN" -H 'Accept: application/vnd.github.v3+json' $deployment_statuses_url
-            deployment_state=$(curl -s -H "Authorization: token $GITHUB_TOKEN" -H 'Accept: application/vnd.github.v3+json' $deployment_statuses_url | jq -r '.[0] | .state')
+            deployment_id=$(cat github_deployment | jq -r '.id')
+            deployment_state=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H 'Accept: application/vnd.github.v3+json' https://api.github.com/repos/$GITHUB_REPOSITORY/deployments/$deployment_id/statuses | jq -r '.[0] | .state')
             case "$deployment_state" in
-              success)
-                ;;
-              *)
+              pending|in_progress|queued)
                 github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/runs/$GITHUB_RUN_ID"
                 make github_deployment_status \
                   deployment_id=$deployment_id \
