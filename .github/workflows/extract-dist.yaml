@@ -83,3 +83,22 @@ jobs:
               log_url=$github_run_url \
               environment_url="https://storage.googleapis.com/quickdocs-dist/quicklisp/$(make quicklisp_version)/info.json"
           fi
+      - name: Finalize the deployment
+        if: always()
+        run: |
+          if [ -f github_deployment ]; then
+            deployment_id=$(cat github_deployment | jq -r '.id')
+            deployment_state=$(curl -H "Authorization: token $GITHUB_TOKEN" -H 'Accept: application/vnd.github.v3+json' https://api.github.com/repos/$GITHUB_REPOSITORY/deployments/$deployment_id/statuses | jq -r '.[0] | .state')
+            case "$deployment_state" in
+              success)
+                ;;
+              *)
+                github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/runs/$GITHUB_RUN_ID"
+                make github_deployment_status \
+                  deployment_id=$deployment_id \
+                  description="Failure" \
+                  state=failure \
+                  log_url=$github_run_url
+                ;;
+            esac
+          fi
