@@ -49,14 +49,7 @@ clean:
 	rm -rf output .output
 
 # GitHub API
-.PHONY: github_deployment github_deployment_status
-github_deployment:
-	curl -s -X POST \
-		-H "Authorization: token ${GITHUB_TOKEN}" \
-		-H 'Accept: application/vnd.github.v3+json' \
-		https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments \
-		-d "{\"ref\":\"master\",\"required_contexts\":[],\"payload\":{\"version\":\"${quicklisp_version}\"}}"
-
+.PHONY: github_deployment_status
 github_deployment_status:
 	curl -s -X POST \
 		-H "Authorization: token ${GITHUB_TOKEN}" \
