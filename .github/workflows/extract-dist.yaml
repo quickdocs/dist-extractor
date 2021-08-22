@@ -6,6 +6,9 @@ jobs:
   extract:
     name: Extract data
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v2
         with:

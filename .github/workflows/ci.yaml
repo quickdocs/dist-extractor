@@ -9,6 +9,9 @@ jobs:
   run_extract:
     name: Run extract to test
     if: github.ref != 'refs/heads/master'
+    concurrency:
+      group: ci-${{ github.ref }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
