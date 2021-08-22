@@ -20,7 +20,7 @@ jobs:
             echo "Found a new dist version '$quicklisp_version'"
             echo "Creating a deployment"
             curl -s -X POST \
-              -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' \
+              -H 'Authorization: token ${{ secrets.GH_DEPLOY_TOKEN }}' \
               -H 'Accept: application/vnd.github.v3+json' \
               https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments \
               -d "{\"ref\":\"master\",\"required_contexts\":[],\"payload\":{\"version\":\"${quicklisp_version}\"}}" \
