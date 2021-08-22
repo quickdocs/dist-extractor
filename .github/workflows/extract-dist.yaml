@@ -94,19 +94,21 @@ jobs:
               environment_url="https://storage.googleapis.com/quickdocs-dist/quicklisp/$quicklisp_version/info.json"
           fi
       - name: Finalize the deployment
-        if: github.event_name == 'deployment'
+        if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
         run: |
-          deployment_state=$(curl -H "Authorization: token $GITHUB_TOKEN" -H 'Accept: application/vnd.github.v3+json' https://api.github.com/repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses | jq -r '.[0] | .state')
-          case "$deployment_state" in
-            pending|in_progress|queued)
-              github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-              make github_deployment_status \
-                deployment_id=$DEPLOYMENT_ID \
-                description="Failed to extract version '$(make quicklisp_version)'" \
-                state=failure \
-                log_url=$github_run_url
-              ;;
-          esac
+          if [ "$DEPLOYMENT_ID" != "null" ]; then
+            deployment_state=$(curl -H "Authorization: token $GITHUB_TOKEN" -H 'Accept: application/vnd.github.v3+json' https://api.github.com/repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses | jq -r '.[0] | .state')
+            case "$deployment_state" in
+              pending|in_progress|queued)
+                github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+                make github_deployment_status \
+                  deployment_id=$DEPLOYMENT_ID \
+                  description="Failed to extract version '$(make quicklisp_version)'" \
+                  state=failure \
+                  log_url=$github_run_url
+                ;;
+            esac
+          fi
