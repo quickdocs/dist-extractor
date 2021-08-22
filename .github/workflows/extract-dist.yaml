@@ -1,10 +1,6 @@
 name: Extract Quicklisp dist data
 
-on:
-  push:
-    branches:
-      - '!master'
-  deployment:
+on: [deployment]
 
 jobs:
   extract:
@@ -30,7 +26,6 @@ jobs:
         run: |
           make docker_image
       - name: Push Docker image
-        if: github.ref == 'refs/heads/master'
         run: |
           image_name=ghcr.io/quickdocs/quicklisp-dist-all
           version=$(docker images ghcr.io/quickdocs/quicklisp-dist-all | tail -n +2 | head -n 1 | awk '{ print $2 }')
@@ -48,34 +43,27 @@ jobs:
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
           QUICKLISP_VERSION: ${{ steps.quicklisp.outputs.version }}
         run: |
-          if [ "$DEPLOYMENT_ID" != "null" ]; then
-            echo "Deployment ID: $DEPLOYMENT_ID"
-            # Change the deployment status to 'in_progress'
-            github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-            make github_deployment_status \
-              deployment_id=$DEPLOYMENT_ID \
-              description="Extracting version '$QUICKLISP_VERSION'" \
-              state=in_progress \
-              log_url=$github_run_url
+          echo "Deployment ID: $DEPLOYMENT_ID"
+          # Change the deployment status to 'in_progress'
+          github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          make github_deployment_status \
+            deployment_id=$DEPLOYMENT_ID \
+            description="Extracting version '$QUICKLISP_VERSION'" \
+            state=in_progress \
+            log_url=$github_run_url
 
-            # Get a deployment
-            curl -s -H 'Accept: application/vnd.github.v3+json' \
-              https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments/${DEPLOYMENT_ID} \
-              > github_deployment
-            extract_target=$(jq -r '.payload.target' github_deployment)
-            if [ "$extract_target" = "all" ]; then
-              EXTRACT_ALL=1
-            fi
-          else
-            if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-              EXTRACT_ALL=1
-            fi
+          # Get a deployment
+          curl -s -H 'Accept: application/vnd.github.v3+json' \
+            https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments/${DEPLOYMENT_ID} \
+            > github_deployment
+          extract_target=$(jq -r '.payload.target' github_deployment)
+          if [ "$extract_target" = "all" ]; then
+            EXTRACT_ALL=1
           fi
 
           # Extract
           make generate-index extract EXTRACT_ALL=${EXTRACT_ALL}
       - name: Upload to GCS
-        if: github.event_name == 'deployment'
         env:
           GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
@@ -99,15 +87,13 @@ jobs:
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
           QUICKLISP_VERSION: ${{ steps.quicklisp.outputs.version }}
         run: |
-          if [ "$DEPLOYMENT_ID" != "null" ]; then
-            github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-            make github_deployment_status \
-              deployment_id=$DEPLOYMENT_ID \
-              description="Successfully extracted version '$QUICKLISP_VERSION'" \
-              state=success \
-              log_url=$github_run_url \
-              environment_url="https://storage.googleapis.com/quickdocs-dist/quicklisp/$QUICKLISP_VERSION/info.json"
-          fi
+          github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          make github_deployment_status \
+            deployment_id=$DEPLOYMENT_ID \
+            description="Successfully extracted version '$QUICKLISP_VERSION'" \
+            state=success \
+            log_url=$github_run_url \
+            environment_url="https://storage.googleapis.com/quickdocs-dist/quicklisp/$QUICKLISP_VERSION/info.json"
       - name: Change the state of the deployment to 'failure'
         if: failure()
         env:
@@ -115,11 +101,9 @@ jobs:
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
           QUICKLISP_VERSION: ${{ steps.quicklisp.outputs.version }}
         run: |
-          if [ "$DEPLOYMENT_ID" != "null" ]; then
-            github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-            make github_deployment_status \
-              deployment_id=$DEPLOYMENT_ID \
-              description="Failed to extract version '$QUICKLISP_VERSION'" \
-              state=failure \
-              log_url=$github_run_url
-          fi
+          github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          make github_deployment_status \
+            deployment_id=$DEPLOYMENT_ID \
+            description="Failed to extract version '$QUICKLISP_VERSION'" \
+            state=failure \
+            log_url=$github_run_url
