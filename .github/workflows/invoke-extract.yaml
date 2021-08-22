@@ -7,7 +7,7 @@ on:
 
 jobs:
   invoke_extract:
-    name: Check for updates
+    name: Invoke full extraction
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
