@@ -41,7 +41,7 @@ jobs:
       - name: Extract the dist data
         env:
           BUCKET_BASE_URL: https://storage.googleapis.com/quickdocs-dist
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
         run: |
           quicklisp_version=$(make quicklisp_version)
@@ -74,7 +74,7 @@ jobs:
       - name: Upload to GCS
         if: github.event_name == 'deployment'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
         run: |
           if [ -d ./output ]; then
@@ -96,7 +96,7 @@ jobs:
       - name: Finalize the deployment
         if: always()
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
         run: |
           if [ "$DEPLOYMENT_ID" != "null" ]; then
