@@ -21,10 +21,10 @@ jobs:
             echo "Creating a deployment"
             curl -s -X POST \
               -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' \
-		          -H 'Accept: application/vnd.github.v3+json' \
-		          https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments \
-		          -d "{\"ref\":\"master\",\"required_contexts\":[],\"payload\":{\"version\":\"${quicklisp_version}\"}}" \
-              > >(tee github_deployment)
+              -H 'Accept: application/vnd.github.v3+json' \
+              https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments \
+              -d "{\"ref\":\"master\",\"required_contexts\":[],\"payload\":{\"version\":\"${quicklisp_version}\"}}" \
+                  > >(tee github_deployment)
 
             deployment_id=$(jq '.id' github_deployment)
             if [ "$deployment_id" = "null" ]; then
