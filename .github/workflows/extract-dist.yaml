@@ -37,7 +37,7 @@ jobs:
           docker push "$image_name:$version"
       - name: Get deployment ID
         id: deployment
-        run: echo "::set-output name=id::$(jq '.deployment.id' $GITHUB_EVENT_PATH)"
+        run: echo "::set-output name=id::$(jq -r '.deployment.id' $GITHUB_EVENT_PATH)"
       - name: Extract the dist data
         env:
           BUCKET_BASE_URL: https://storage.googleapis.com/quickdocs-dist
@@ -59,7 +59,7 @@ jobs:
             curl -s -H 'Accept: application/vnd.github.v3+json' \
               https://api.github.com/repos/${GITHUB_REPOSITORY}/deployments/${DEPLOYMENT_ID} \
               > github_deployment
-            extract_target=$(jq '.payload.target' github_deployment)
+            extract_target=$(jq -r '.payload.target' github_deployment)
             if [ "$extract_target" = "all" ]; then
               EXTRACT_ALL=1
             fi

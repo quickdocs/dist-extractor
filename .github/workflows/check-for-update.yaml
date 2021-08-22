@@ -26,7 +26,7 @@ jobs:
               -d "{\"ref\":\"master\",\"required_contexts\":[],\"payload\":{\"version\":\"${quicklisp_version}\"}}" \
                   > >(tee github_deployment)
 
-            deployment_id=$(jq '.id' github_deployment)
+            deployment_id=$(jq -r '.id' github_deployment)
             if [ "$deployment_id" = "null" ]; then
               echo "Failed to create a deployment"
               exit 1
