@@ -3,7 +3,7 @@ name: Extract Quicklisp dist data
 on:
   push:
     branches:
-      - !master
+      - '!master'
   deployment:
 
 jobs:
