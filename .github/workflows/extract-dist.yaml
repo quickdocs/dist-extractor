@@ -42,7 +42,7 @@ jobs:
       - name: Extract the dist data
         env:
           BUCKET_BASE_URL: https://storage.googleapis.com/quickdocs-dist
-          GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
         run: |
           echo "Deployment ID: $DEPLOYMENT_ID"
@@ -67,7 +67,7 @@ jobs:
           make generate-index extract EXTRACT_ALL=${EXTRACT_ALL}
       - name: Upload to GCS
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
         run: |
           if [ -d ./output ]; then
@@ -84,7 +84,7 @@ jobs:
       - name: Change the state of the deployment to 'success'
         if: success()
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
           QUICKLISP_VERSION: ${{ steps.quicklisp.outputs.version }}
         run: |
@@ -98,7 +98,7 @@ jobs:
       - name: Change the state of the deployment to 'error'
         if: failure()
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
         run: |
           github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
@@ -110,7 +110,7 @@ jobs:
       - name: Finalize the deployment status
         if: always()
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
         run: |
           state=$(curl -s https://api.github.com/repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses | jq -r '.[0].state')
