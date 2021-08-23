@@ -113,6 +113,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
         run: |
+          DEPLOYMENT_ID=${DEPLOYMENT_ID:-$(jq -r '.deployment.id' $GITHUB_EVENT_PATH)}
           state=$(curl -s https://api.github.com/repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses | jq -r '.[0].state')
           case "$state" in
             success|failure|error)
