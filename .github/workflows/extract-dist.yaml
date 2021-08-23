@@ -44,14 +44,13 @@ jobs:
           BUCKET_BASE_URL: https://storage.googleapis.com/quickdocs-dist
           GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
-          QUICKLISP_VERSION: ${{ steps.quicklisp.outputs.version }}
         run: |
           echo "Deployment ID: $DEPLOYMENT_ID"
           # Change the deployment status to 'in_progress'
           github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           make github_deployment_status \
             deployment_id=$DEPLOYMENT_ID \
-            description="Extracting version '$QUICKLISP_VERSION'" \
+            description="Start extracting the library data from a Quicklisp dist." \
             state=in_progress \
             log_url=$github_run_url
 
@@ -70,13 +69,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
-          QUICKLISP_VERSION: ${{ steps.quicklisp.outputs.version }}
         run: |
           if [ -d ./output ]; then
             github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             make github_deployment_status \
               deployment_id=$DEPLOYMENT_ID \
-              description="Uploading version '$QUICKLISP_VERSION'" \
+              description="Uploading the artifacts to the storage server." \
               state=in_progress \
               log_url=$github_run_url
 
@@ -93,20 +91,38 @@ jobs:
           github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           make github_deployment_status \
             deployment_id=$DEPLOYMENT_ID \
-            description="Successfully extracted version '$QUICKLISP_VERSION'" \
+            description="Successfully extracted the library data." \
             state=success \
             log_url=$github_run_url \
             environment_url="https://storage.googleapis.com/quickdocs-dist/quicklisp/$QUICKLISP_VERSION/info.json"
-      - name: Change the state of the deployment to 'failure'
+      - name: Change the state of the deployment to 'error'
         if: failure()
         env:
           GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
           DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
-          QUICKLISP_VERSION: ${{ steps.quicklisp.outputs.version }}
         run: |
           github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           make github_deployment_status \
             deployment_id=$DEPLOYMENT_ID \
-            description="Failed to extract version '$QUICKLISP_VERSION'" \
-            state=failure \
+            description="Error when extracting/uploading the library data." \
+            state=error \
             log_url=$github_run_url
+      - name: Finalize the deployment status
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
+          DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
+        run: |
+          state=$(curl -s https://api.github.com/repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses | jq -r '.[0].state')
+          case "$state" in
+            success|failure|error)
+              ;;
+            *)
+              github_run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+              make github_deployment_status \
+                deployment_id=$DEPLOYMENT_ID \
+                description="Canceled the extraction." \
+                state=failure \
+                log_url=$github_run_url
+              ;;
+          esac
