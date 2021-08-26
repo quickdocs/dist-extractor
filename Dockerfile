@@ -1,4 +1,4 @@
-FROM clfoundation/sbcl
+FROM clfoundation/sbcl:slim
 ARG DIST_VERSION
 ARG BUILD_DATE
 ARG VCS_REF
