@@ -39,7 +39,7 @@ else
 
   # KLUDGE: The directory name may different from the dist version (ex. '2021-10-21')
   if [ "${#releases[@]}" == 0 ]; then
-    releases=( $(cat "$destination/$dist/$version/releases.json" | jq -r "to_entries | map(select(.value | scan(\"[0-9]{4}-[0-9]{2}\") == \"$(echo $version | cut -d - -f -2)-\")) | map(.key) | .[]") )
+    releases=( $(cat "$destination/$dist/$version/releases.json" | jq -r "to_entries | map(select(.value | scan(\"[0-9]{4}-[0-9]{2}-\") == \"$(echo $version | cut -d - -f -2)-\")) | map(.key) | .[]") )
   fi
 
   echo "Extracting new/updated projects in $version."
