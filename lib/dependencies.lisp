@@ -156,4 +156,14 @@
                 (string-downcase system-name)))))))))
 
 (defun lisp-file-dependencies (file)
-  (asdf/package-inferred-system::package-inferred-system-file-dependencies file))
+  (flet ((ensure-car (object)
+           (if (listp object)
+               (car object)
+               object)))
+    (let* ((defpackage-form (asdf/package-inferred-system::file-defpackage-form file))
+           (defpackage-form (remove :local-nicknames
+                                    defpackage-form
+                                    :key #'ensure-car
+                                    :test 'equal)))
+      (and defpackage-form
+           (asdf/package-inferred-system::package-dependencies defpackage-form)))))
