@@ -11,6 +11,7 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
 RUN set -x; \
   apt-get update && apt-get -y install --no-install-recommends \
     jq \
+    file \
     # For cl-fuse
     libfuse-dev \
     # For IOLib
