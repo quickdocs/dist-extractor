@@ -25,7 +25,7 @@
                  ((symbolp v)
                   (string-downcase v))
                  (t v))))
-      (yason:encode (convert form)))
+      (yason:encode (convert form) *standard-output*))
     (fresh-line)))
 
 (main)
