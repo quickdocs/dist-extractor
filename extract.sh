@@ -11,7 +11,8 @@ quit() { echo "SIGINT"; exit; }
 
 validate_json() {
   file=$1
-  (cat "$file" | jq . -M >/dev/null) || (echo "[ERROR] Failed to parse a JSON file '$file'." >&2 && exit 1)
+  ([ -f "$file" ] && [ "$(stat -c %s "$file")" != 0 ] && (cat "$file" | jq . -M >/dev/null)) \
+    || (echo "[ERROR] Failed to parse a JSON file '$file'." >&2 && exit 1)
 }
 
 dist=quicklisp
@@ -22,7 +23,8 @@ dist_dir="$output/$dist/$version"
 
 mkdir -p "$destination/$dist/$version"
 scripts/dist.lisp "$dist" \
-  | scripts/sexp-to-json.lisp | jq . -M > "$destination/$dist/$version/info.json"
+  | scripts/sexp-to-json.lisp | jq . -M > "$destination/$dist/$version/info.json" 2> >(tee -a "$destination/$dist/$version/errors.log" >&2)
+validate_json "$destination/$dist/$version/info.json"
 
 scripts/dist.lisp "$dist" releases \
   | scripts/sexp-to-json.lisp | jq . -M > "$destination/$dist/$version/releases.json"
@@ -115,6 +117,6 @@ for release in "${releases[@]}"; do
 done
 
 ## Concatenate error logs
-find "$dist_dir" -name "error.log" -size +0c | xargs tail -n +1 -v > "$destination/$dist/$version/errors.log"
+find "$dist_dir" -name "error.log" -size +0c | xargs tail -n +1 -v >> "$destination/$dist/$version/errors.log"
 
 chmod 777 -R "$destination"
