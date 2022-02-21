@@ -1,31 +1,22 @@
 #!/usr/local/bin/sbcl --script
 
 (require 'asdf)
-(load (merge-pathnames #P"quicklisp/setup.lisp" (user-homedir-pathname)))
 
-(ql:quickload '(:yason :alexandria) :silent t)
+(dolist (dir (uiop:subdirectories
+               (merge-pathnames #P"deps/" *default-pathname-defaults*)))
+  (push dir asdf:*central-registry*))
 
-(defun alistp (value)
-  (and (consp value)
-       (consp (first value))
-       (stringp (car (first value)))))
+(let ((*standard-output* (make-broadcast-stream))
+      (stderr *error-output*)
+      (*error-output* (make-broadcast-stream)))
+  (handler-bind ((error
+                   (lambda (e)
+                     (uiop:print-condition-backtrace e :stream stderr))))
+    (asdf:load-system :cl-json)))
 
 (defun main ()
   (let ((form (read)))
-    (labels ((convert (v)
-               (cond
-                 ((alistp v)
-                  (alexandria:alist-hash-table
-                    (loop for (k . v) in v
-                          collect (cons k (convert v)))))
-                 ((consp v)
-                  (map 'vector #'convert v))
-                 ((null v)
-                  nil)
-                 ((symbolp v)
-                  (string-downcase v))
-                 (t v))))
-      (yason:encode (convert form) *standard-output*))
+    (cl-json:encode-json form)
     (fresh-line)))
 
 (main)

@@ -31,9 +31,13 @@ quicklisp-projects-version: quicklisp-projects
 quicklisp-projects:
 	git clone https://github.com/quicklisp/quicklisp-projects
 
+deps:
+	mkdir -p deps
+	(cd deps && curl -sSL http://beta.quicklisp.org/archive/cl-json/2014-12-17/cl-json-20141217-git.tgz | tar -xz)
+
 .PHONY: extract
 extract: output/quicklisp/$(quicklisp_version)
-output/quicklisp/$(quicklisp_version): quicklisp-projects-version
+output/quicklisp/$(quicklisp_version): deps quicklisp-projects-version
 	docker run --rm -i -e BUCKET_BASE_URL=${BUCKET_BASE_URL} -e EXTRACT_ALL=${EXTRACT_ALL} -v ${PWD}:/app "${image_name}:${quicklisp_version}" /app/extract.sh
 
 .PHONY: generate-index
@@ -46,7 +50,7 @@ upload:
 
 .PHONY: clean
 clean:
-	rm -rf output .output
+	rm -rf output .output deps
 
 # GitHub API
 .PHONY: github_deployment_status
