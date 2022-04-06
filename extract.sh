@@ -39,9 +39,10 @@ if [ "$EXTRACT_ALL" == 1 ]; then
 else
   releases=( $(cat "$destination/$dist/$version/releases.json" | jq -r "to_entries | map(select(.value | scan(\"[0-9]{4}-[0-9]{2}-[0-9]{2}\") == \"${version}\")) | map(.key) | .[]") )
 
-  # KLUDGE: The directory name may different from the dist version (ex. '2021-10-21')
+  # KLUDGE: The directory name may different from the dist version (ex. '2021-10-21', '2022-04-01')
   if [ "${#releases[@]}" == 0 ]; then
-    releases=( $(cat "$destination/$dist/$version/releases.json" | jq -r "to_entries | map(select(.value | scan(\"[0-9]{4}-[0-9]{2}-\") == \"$(echo $version | cut -d - -f -2)-\")) | map(.key) | .[]") )
+    archive_date=$(date +%Y-%m-%d --date="1 day ago $version")
+    releases=( $(cat "$destination/$dist/$version/releases.json" | jq -r "to_entries | map(select(.value | scan(\"[0-9]{4}-[0-9]{2}-[0-9]{2}\") == \"${archive_date}\")) | map(.key) | .[]") )
   fi
 
   echo "Extracting new/updated projects in $version."
