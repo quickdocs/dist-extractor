@@ -83,7 +83,7 @@
                                                                               #())))))))))))
             (loop for system-file in (ql-dist:system-files release)
                   collect `(("name" . ,(pathname-name system-file))
-                            ("system_file_name" . ,(merge-pathnames system-file (ql-dist:base-directory release)))))
+                            ("system_file_name" . ,(pathname-name system-file))))
             #()))
     ("systems_metadata_url" . ,(bucket-release-url release "/systems.json"))
     ("readme_url" . ,(bucket-release-url release "/readme.json"))))
