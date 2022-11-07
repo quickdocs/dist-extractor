@@ -53,32 +53,37 @@
     ("archive_content_sha1" . ,(ql-dist:archive-content-sha1 release))
     ("prefix" . ,(ql-dist:prefix release))
     ("systems"
-     . ,(or (loop for (system-file . system-defs) in (project-dependencies release)
-                  append (loop for (system-name defsystem-depends-on depends-on weakly-depends-on) in system-defs
-                               append
-                               (let ((system (let ((*standard-output* (make-broadcast-stream)))
-                                               (handler-bind ((warning #'muffle-warning))
-                                                 (asdf:find-system system-name)))))
-                                 (list*
-                                   (append
-                                     `(("name" . ,system-name)
-                                       ("system_file_name" . ,(pathname-name system-file)))
-                                     (asdf-system-metadata system)
-                                     `(("defsystem_depends_on" . ,(or (uniq defsystem-depends-on) #()))
-                                       ("depends_on" . ,(or (uniq depends-on) #()))
-                                       ("weakly_depends_on" . ,(or (uniq weakly-depends-on) #()))))
-                                   (when (typep system 'asdf:package-inferred-system)
-                                     (loop for file in (directory-lisp-files (asdf:component-pathname system))
-                                           for sub-system-name = (lisp-file-system-name file
-                                                                                        (asdf:component-pathname system)
-                                                                                        system-name)
-                                           when sub-system-name
-                                           collect `(("name" . ,sub-system-name)
-                                                     ("class" . "package-inferred-system")
-                                                     ("depends_on" . ,(or (uniq (mapcar (lambda (name)
-                                                                                          `(("name" . ,(string-downcase name))))
-                                                                                        (lisp-file-dependencies file)))
-                                                                          #())))))))))
+     . ,(or (ignore-errors
+              (handler-bind ((error #'uiop:print-condition-backtrace))
+                (loop for (system-file . system-defs) in (project-dependencies release)
+                      append (loop for (system-name defsystem-depends-on depends-on weakly-depends-on) in system-defs
+                                   append
+                                   (let ((system (let ((*standard-output* (make-broadcast-stream)))
+                                                   (handler-bind ((warning #'muffle-warning))
+                                                     (asdf:find-system system-name)))))
+                                     (list*
+                                       (append
+                                         `(("name" . ,system-name)
+                                           ("system_file_name" . ,(pathname-name system-file)))
+                                         (asdf-system-metadata system)
+                                         `(("defsystem_depends_on" . ,(or (uniq defsystem-depends-on) #()))
+                                           ("depends_on" . ,(or (uniq depends-on) #()))
+                                           ("weakly_depends_on" . ,(or (uniq weakly-depends-on) #()))))
+                                       (when (typep system 'asdf:package-inferred-system)
+                                         (loop for file in (directory-lisp-files (asdf:component-pathname system))
+                                               for sub-system-name = (lisp-file-system-name file
+                                                                                            (asdf:component-pathname system)
+                                                                                            system-name)
+                                               when sub-system-name
+                                               collect `(("name" . ,sub-system-name)
+                                                         ("class" . "package-inferred-system")
+                                                         ("depends_on" . ,(or (uniq (mapcar (lambda (name)
+                                                                                              `(("name" . ,(string-downcase name))))
+                                                                                            (lisp-file-dependencies file)))
+                                                                              #())))))))))))
+            (loop for system-file in (ql-dist:system-files release)
+                  collect `(("name" . ,(pathname-name system-file))
+                            ("system_file_name" . ,(merge-pathnames system-file (ql-dist:base-directory release)))))
             #()))
     ("systems_metadata_url" . ,(bucket-release-url release "/systems.json"))
     ("readme_url" . ,(bucket-release-url release "/readme.json"))))
