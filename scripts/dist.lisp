@@ -1,7 +1,7 @@
 #!/usr/local/bin/sbcl --script
 
 (require 'asdf)
-(load (merge-pathnames #P"quicklisp/setup.lisp" (user-homedir-pathname)))
+(load (merge-pathnames #P".roswell/lisp/quicklisp/setup.lisp" (user-homedir-pathname)))
 
 (defun bucket-dist-url (dist path)
   (format nil "~A/~A/~A~A"

@@ -1,4 +1,4 @@
-FROM clfoundation/sbcl:slim
+FROM fukamachi/sbcl
 ARG DIST_VERSION
 ARG BUILD_DATE
 ARG VCS_REF
@@ -20,16 +20,11 @@ RUN set -x; \
 
 WORKDIR /app
 
-ADD https://beta.quicklisp.org/quicklisp.lisp /root/quicklisp.lisp
-
 RUN set -x; \
-  sbcl --load /root/quicklisp.lisp \
-    --eval '(quicklisp-quickstart:install)' \
+  sbcl \
     --eval '(ql:uninstall-dist "quicklisp")' \
     --eval "(ql-dist:install-dist \"http://beta.quicklisp.org/dist/quicklisp/${DIST_VERSION}/distinfo.txt\" :prompt nil)" \
     --quit && \
-  echo '#-quicklisp (load #P"/root/quicklisp/setup.lisp")' > /root/.sbclrc && \
-  sbcl --eval '(mapc (function ql-dist:ensure-installed) (ql-dist:provided-releases t))' --quit && \
-  rm /root/quicklisp.lisp
+  sbcl --eval '(mapc (lambda (release) (ignore-errors (handler-bind ((error (function uiop:print-condition-backtrace))) (ql-dist:ensure-installed release)))) (ql-dist:provided-releases t))' --quit
 
 ENTRYPOINT ["/bin/bash"]

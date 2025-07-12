@@ -1,6 +1,6 @@
 #!/usr/local/bin/sbcl --script
 
-(load (merge-pathnames #P"quicklisp/setup.lisp" (user-homedir-pathname)))
+(load (merge-pathnames #P".roswell/lisp/quicklisp/setup.lisp" (user-homedir-pathname)))
 
 (defun readme-file-p (path)
   (check-type path pathname)

@@ -1,7 +1,7 @@
 #!/usr/local/bin/sbcl --script
 
 (require 'asdf)
-(load (merge-pathnames #P"quicklisp/setup.lisp" (user-homedir-pathname)))
+(load (merge-pathnames #P".roswell/lisp/quicklisp/setup.lisp" (user-homedir-pathname)))
 (load (merge-pathnames #P"../lib/asdf-types.lisp" *load-pathname*))
 (load (merge-pathnames #P"../lib/dependencies.lisp" *load-pathname*))
 
